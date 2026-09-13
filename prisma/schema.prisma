@@ -20,9 +20,12 @@ model User {
   image         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  role          String    @default("USER")
   sessions      Session[]
   accounts      Account[]
+  role          Role       @default(USER)
+  annonces      Annonce[]  // Les annonces créées par cet agent
+  favoris       Favori[]   // Les annonces mises en favoris
+  questions     Question[] // Les questions posées par cet utilisateur
 
   @@unique([email])
   @@map("user")
@@ -74,4 +77,89 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+enum Role {
+  USER
+  AGENT
+  ADMIN
+}
+
+enum TypeBien {
+  VENTE
+  LOCATION
+}
+
+enum StatutPublication {
+  BROUILLON
+  PUBLIEE
+}
+
+enum StatutBien {
+  DISPONIBLE
+  LOUE
+  VENDU
+}
+
+
+model Annonce {
+  id                Int               @id @default(autoincrement())
+  titre             String
+  description       String
+  typeBien          TypeBien
+  statutPublication StatutPublication @default(BROUILLON)
+  statutBien        StatutBien        @default(DISPONIBLE)
+  prix              Float
+  dateDisponibilite DateTime
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  auteur            User              @relation(fields: [auteurId], references: [id], onDelete: Cascade)
+  auteurId          String
+
+  photos            Photo[]
+  questions         Question[]
+  favoris           Favori[]
+
+  @@index([statutPublication, createdAt])
+}
+
+model Photo {
+  id        Int      @id @default(autoincrement())
+  url       String
+  createdAt DateTime @default(now())
+
+  annonce   Annonce  @relation(fields: [annonceId], references: [id], onDelete: Cascade)
+  annonceId Int
+
+  @@index([annonceId])
+}
+
+model Question {
+  id         Int       @id @default(autoincrement())
+  contenu    String
+  reponse    String?
+  createdAt  DateTime  @default(now())
+  repondueAt DateTime?
+
+  annonce    Annonce   @relation(fields: [annonceId], references: [id], onDelete: Cascade)
+  annonceId  Int
+
+  auteur     User      @relation( fields: [auteurId], references: [id], onDelete:Cascade)
+  auteurId   String
+
+  @@index([annonceId])
+}
+
+model Favori {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+
+  annonce   Annonce  @relation(fields: [annonceId], references: [id], onDelete: Cascade)
+  annonceId Int
+
+  @@unique([userId, annonceId])
 }
