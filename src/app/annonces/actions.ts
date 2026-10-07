@@ -58,3 +58,22 @@ export async function modifierAnnonce(rawId: unknown, formData: FormData) {
   revalidatePath(`/annonces/${id.data}`)
   redirect(`/annonces/${id.data}`)
 }
+
+//supprimer une annonce
+export async function supprimerAnnonce(rawId: unknown) {
+  // Authentification puis autorisation par rôle
+  const user = await exigerAgent()
+
+  //Validation de l'id
+  const id = IdInput.safeParse(rawId)
+  if (!id.success) notFound()
+
+  //Suppression 
+  const res = await prisma.annonce.deleteMany({
+    where: { id: id.data, ...filtreProprietaire(user) },
+  })
+  if (res.count === 0) notFound() 
+
+  revalidatePath("/annonces")
+  redirect("/annonces")
+}

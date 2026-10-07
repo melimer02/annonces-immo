@@ -4,6 +4,11 @@ import { prisma } from "@/lib/prisma"
 import { utilisateurCourant } from "@/lib/session"
 import { peutVoir } from "@/lib/authz"
 import { IdInput } from "@/lib/shema"
+import Link from "next/link"
+import { peutModifier } from "@/lib/authz"
+import { supprimerAnnonce } from "../actions"
+
+
 
 async function Questions({ annonceId }: { annonceId: number }) {
   const questions = await prisma.question.findMany({
@@ -62,6 +67,19 @@ if (!annonce || !peutVoir(user, annonce)) notFound()
       <Suspense fallback={<p>Chargement des questions…</p>}>
         <Questions annonceId={annonce.id} />
       </Suspense>
+      {user && peutModifier(user, annonce) && (
+  <div className="mt-4 flex gap-3">
+    <Link href={`/annonces/${annonce.id}/edit`} className="rounded border px-3 py-1">
+      Modifier
+    </Link>
+    <form action={supprimerAnnonce.bind(null, annonce.id)}>
+      <button type="submit" className="rounded bg-red-600 text-white px-3 py-1">
+        Supprimer
+      </button>
+    </form>
+  </div>
+)}
     </div>
+
   )
 }
