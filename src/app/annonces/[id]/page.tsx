@@ -1,6 +1,9 @@
 import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
+import { utilisateurCourant } from "@/lib/session"
+import { peutVoir } from "@/lib/authz"
+import { IdInput } from "@/lib/shema"
 
 async function Questions({ annonceId }: { annonceId: number }) {
   const questions = await prisma.question.findMany({
@@ -10,7 +13,7 @@ async function Questions({ annonceId }: { annonceId: number }) {
   })
 
   if (questions.length === 0) {
-    return <p className="text-gray-500">Aucune question pour l'instant.</p>
+    return <p className="text-gray-500">Aucune question pour linstant.</p>
   }
 
   return (
@@ -35,16 +38,16 @@ export default async function AnnoncePage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const annonceId = Number(id)
+const parsedId = IdInput.safeParse(id)
+if (!parsedId.success) notFound()
 
-  if (Number.isNaN(annonceId)) notFound()
+const annonce = await prisma.annonce.findUnique({
+  where: { id: parsedId.data },
+  include: { auteur: { select: { name: true } } },
+})
 
-  const annonce = await prisma.annonce.findFirst({
-    where: { id: annonceId, statutPublication: "PUBLIEE" },
-    include: { auteur: { select: { name: true } } },
-  })
-
-  if (!annonce) notFound()
+const user = await utilisateurCourant()
+if (!annonce || !peutVoir(user, annonce)) notFound()
 
   return (
     <div className="p-6">
