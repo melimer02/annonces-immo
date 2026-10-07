@@ -12,3 +12,13 @@ export const AnnonceInput = z.object({
 export const IdInput = z.coerce.number().int().positive()
 
 export type AnnonceInput = z.infer<typeof AnnonceInput>
+export const QuestionInput = z.object({
+  contenu: z.string().min(5, "La question doit contenir au moins 5 caractères"),
+})
+
+export const ReponseInput = z.object({
+  reponse: z.string().min(5, "La réponse doit contenir au moins 5 caractères"),
+})
+
+export type QuestionInput = z.infer<typeof QuestionInput>
+export type ReponseInput = z.infer<typeof ReponseInput>

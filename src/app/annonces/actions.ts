@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/prisma"
-import { exigerAgent } from "@/lib/session"
+import { exigerAgent ,utilisateurCourant} from "@/lib/session"
 import { redirect, notFound } from "next/navigation"
 import { filtreProprietaire } from "@/lib/authz"
-import { AnnonceInput, IdInput } from "@/lib/shema"
+import { AnnonceInput, IdInput ,QuestionInput,  ReponseInput} from "@/lib/shema"
 
 
 // creerAnnonce est une action côté serveur qui permet à un agent de créer une nouvelle annonce.
@@ -102,4 +102,64 @@ export async function supprimerAnnonce(rawId: unknown) {
 
   revalidatePath("/annonces")
   redirect("/annonces")
+}
+
+
+
+//poser une question sur une annonce
+export async function poserQuestion(rawAnnonceId: unknown, formData: FormData) {
+  const user = await utilisateurCourant()
+  if (!user) throw new Error("Non autorisé")
+
+  const annonceId = IdInput.safeParse(rawAnnonceId)
+  if (!annonceId.success) notFound()
+
+  const parsed = QuestionInput.safeParse({
+    contenu: formData.get("contenu"),
+  })
+  if (!parsed.success) return 
+
+  await prisma.question.create({
+    data: {
+      contenu: parsed.data.contenu,
+      annonceId: annonceId.data,
+      auteurId: user.id, // L'ID vient de la session, bloquant l'usurpation[cite: 16]
+    },
+  })
+
+  revalidatePath(`/annonces/${annonceId.data}`)
+}
+
+  //reponse
+export async function repondreQuestion(rawQuestionId: unknown, formData: FormData) {
+  const user = await exigerAgent()
+
+  const questionId = IdInput.safeParse(rawQuestionId)
+  if (!questionId.success) notFound()
+
+  const parsed = ReponseInput.safeParse({
+    reponse: formData.get("reponse"),
+  })
+  if (!parsed.success) return
+
+  // updateMany avec relation empêche la faille IDOR (modification d'une annonce concurrente)[cite: 21]
+  const res = await prisma.question.updateMany({
+    where: {
+      id: questionId.data,
+      annonce: {
+        ...filtreProprietaire(user) 
+      }
+    },
+    data: {
+      reponse: parsed.data.reponse,
+    },
+  })
+
+  if (res.count === 0) notFound()
+
+  // Revalidation de la page via l'ID de l'annonce
+  const question = await prisma.question.findUnique({ where: { id: questionId.data }})
+  if (question) {
+    revalidatePath(`/annonces/${question.annonceId}`)
+  }
 }
