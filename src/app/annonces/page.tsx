@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
+import { utilisateurCourant } from "@/lib/session"
 
 const PAR_PAGE = 6
 
@@ -12,10 +13,18 @@ export default async function AnnoncesPage({
   const page = Math.max(1, Number(sp.page) || 1)
   const type = sp.type === "VENTE" || sp.type === "LOCATION" ? sp.type : undefined
 
-  const where = {
-    statutPublication: "PUBLIEE" as const,
-    ...(type ? { typeBien: type } : {}),
-  }
+  const user = await utilisateurCourant()
+
+const visibilite = user?.role === "ADMIN"
+  ? [{ statutPublication: "PUBLIEE" as const }, { statutPublication: "BROUILLON" as const }]
+  : user
+  ? [{ statutPublication: "PUBLIEE" as const }, { statutPublication: "BROUILLON" as const, auteurId: user.id }]
+  : [{ statutPublication: "PUBLIEE" as const }]
+
+const where = {
+  OR: visibilite,
+  ...(type ? { typeBien: type } : {}),
+}
 
   const [annonces, total] = await Promise.all([
     prisma.annonce.findMany({
