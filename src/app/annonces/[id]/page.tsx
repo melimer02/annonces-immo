@@ -6,7 +6,7 @@ import { peutVoir } from "@/lib/authz"
 import { IdInput } from "@/lib/shema"
 import Link from "next/link"
 import { peutModifier } from "@/lib/authz"
-import { supprimerAnnonce } from "../actions"
+import { supprimerAnnonce , changerPublication} from "../actions"
 
 
 
@@ -77,6 +77,11 @@ if (!annonce || !peutVoir(user, annonce)) notFound()
         Supprimer
       </button>
     </form>
+    <form action={changerPublication.bind(null, annonce.id, annonce.statutPublication !== "PUBLIEE")}>
+  <button type="submit" className="rounded border px-3 py-1">
+    {annonce.statutPublication === "PUBLIEE" ? "Dépublier" : "Publier"}
+  </button>
+</form>
   </div>
 )}
     </div>

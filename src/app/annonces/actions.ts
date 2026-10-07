@@ -59,6 +59,32 @@ export async function modifierAnnonce(rawId: unknown, formData: FormData) {
   redirect(`/annonces/${id.data}`)
 }
 
+
+
+//publier une annonce 
+export async function changerPublication(rawId: unknown, publier: boolean) {
+   const user = await exigerAgent()
+
+
+  const id = IdInput.safeParse(rawId)
+  if (!id.success) notFound()
+
+   const res = await prisma.annonce.updateMany({
+    where: { id: id.data, ...filtreProprietaire(user) },
+    data: { statutPublication: publier ? "PUBLIEE" : "BROUILLON" },
+  })
+  if (res.count === 0) notFound() 
+
+  revalidatePath("/annonces")
+  revalidatePath(`/annonces/${id.data}`)
+}
+
+
+
+
+
+
+
 //supprimer une annonce
 export async function supprimerAnnonce(rawId: unknown) {
   // Authentification puis autorisation par rôle
