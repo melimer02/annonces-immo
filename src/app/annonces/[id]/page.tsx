@@ -7,6 +7,7 @@ import { IdInput } from "@/lib/shema"
 import Link from "next/link"
 import { peutModifier } from "@/lib/authz"
 import { supprimerAnnonce , changerPublication,poserQuestion,repondreQuestion} from "../actions"
+import { FormTexte } from "@/components/form-texte"
 
 
 
@@ -34,18 +35,14 @@ async function Questions({ annonceId ,isOwner}: { annonceId: number , isOwner: b
               <p className="mt-1 italic text-gray-400">En attente de réponse</p>
               
                {isOwner && (
-                <form action={repondreQuestion.bind(null, q.id)} className="mt-2 flex gap-2">
-                  <input 
-                    type="text" 
-                    name="reponse" 
-                    required 
-                    placeholder="Votre réponse (min 5 caractères)..." 
-                    className="border rounded px-2 py-1 flex-1" 
+                <div className="mt-2">
+                  <FormTexte
+                    action={repondreQuestion.bind(null, q.id)}
+                    nom="reponse"
+                    placeholder="Votre réponse (min 5 caractères)..."
+                    bouton="Répondre"
                   />
-                  <button type="submit" className="rounded bg-blue-600 text-white px-3 py-1">
-                    Répondre
-                  </button>
-                </form>
+                </div>
               )}
             </>
           )}
@@ -107,18 +104,13 @@ const isOwner = !!(user && peutModifier(user, annonce))
       {user && (
         <div className="mt-6 border-t pt-4">
           <h3 className="font-semibold text-lg mb-2">Poser une nouvelle question</h3>
-          <form action={poserQuestion.bind(null, annonce.id)} className="flex flex-col gap-2 max-w-md">
-            <textarea 
-              name="contenu" 
-              required 
-              placeholder="Votre question (min 5 caractères)..." 
-              className="border rounded p-2"
-              rows={3}
-            />
-            <button type="submit" className="rounded bg-green-600 text-white px-4 py-2 self-start">
-              Envoyer la question
-            </button>
-          </form>
+          <FormTexte
+            action={poserQuestion.bind(null, annonce.id)}
+            nom="contenu"
+            placeholder="Votre question (min 5 caractères)..."
+            bouton="Envoyer la question"
+            multiligne
+          />
         </div>
       )}
 

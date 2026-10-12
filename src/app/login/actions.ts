@@ -1,24 +1,28 @@
 "use server"
 
-import { z } from "zod"
 import { redirect } from "next/navigation"
+import { APIError } from "better-auth/api"
 import { auth } from "@/lib/auth"
+import { ConnexionInput } from "@/lib/shema"
+import { erreursDe, valeursDuFormulaire, type EtatFormulaire } from "@/lib/form"
 
-const ConnexionInput = z.object({
-  email: z.string().email("Email invalide"),
-  password: z.string().min(1, "Mot de passe requis"),
-})
+export async function connecter(
+  _etat: EtatFormulaire,
+  formData: FormData
+): Promise<EtatFormulaire> {
+  const valeurs = valeursDuFormulaire(formData, ["password"])
 
-export async function connecter(formData: FormData) {
-  const parsed = ConnexionInput.safeParse({
-    email: formData.get("email"),
-    password: formData.get("password"),
-  })
+  const parsed = ConnexionInput.safeParse(valeursDuFormulaire(formData))
+  if (!parsed.success) return { erreurs: erreursDe(parsed.error), valeurs }
 
-  if (!parsed.success) {
-    return { erreurs: parsed.error.flatten().fieldErrors }
+  try {
+    await auth.api.signInEmail({ body: parsed.data })
+  } catch (e) {
+    if (e instanceof APIError) {
+      return { message: "Email ou mot de passe incorrect", valeurs }
+    }
+    throw e
   }
 
-  await auth.api.signInEmail({ body: parsed.data })
   redirect("/annonces")
 }

@@ -1,26 +1,36 @@
 "use server"
 
-import { z } from "zod"
 import { redirect } from "next/navigation"
+import { APIError } from "better-auth/api"
 import { auth } from "@/lib/auth"
+import { InscriptionInput } from "@/lib/shema"
+import { erreursDe, valeursDuFormulaire, type EtatFormulaire } from "@/lib/form"
 
-const InscriptionInput = z.object({
-  name: z.string().min(2, "Nom trop court"),
-  email: z.string().email("Email invalide"),
-  password: z.string().min(8, "8 caractères minimum"),
-})
+export async function inscrire(
+  _etat: EtatFormulaire,
+  formData: FormData
+): Promise<EtatFormulaire> {
+  // Valeurs à réafficher en cas d'erreur : Jamais le mot de passe
+  const valeurs = valeursDuFormulaire(formData, ["password"])
 
-export async function inscrire(formData: FormData) {
-  const parsed = InscriptionInput.safeParse({
-    name: formData.get("name"),
-    email: formData.get("email"),
-    password: formData.get("password"),
-  })
+  const parsed = InscriptionInput.safeParse(valeursDuFormulaire(formData))
+  if (!parsed.success) return { erreurs: erreursDe(parsed.error), valeurs }
 
-  if (!parsed.success) {
-    return { erreurs: parsed.error.flatten().fieldErrors }
+  try {
+    await auth.api.signUpEmail({ body: parsed.data })
+  } catch (e) {
+    if (e instanceof APIError) {
+      const code = String(e.body?.code ?? "")
+      if (code.includes("USER_ALREADY_EXISTS")) {
+        return {
+          erreurs: { email: ["Un compte existe déjà avec cette adresse email"] },
+          valeurs,
+        }
+      }
+      return { message: "Inscription impossible pour le moment, réessayez.", valeurs }
+    }
+    throw e 
   }
 
-  await auth.api.signUpEmail({ body: parsed.data })
-  redirect("/annonces")
+  redirect("/annonces") 
 }

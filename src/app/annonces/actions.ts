@@ -1,28 +1,28 @@
 "use server"
 
+import { z } from "zod"
 import { revalidatePath } from "next/cache"
-import { prisma } from "@/lib/prisma"
-import { exigerAgent ,utilisateurCourant} from "@/lib/session"
 import { redirect, notFound } from "next/navigation"
-import { filtreProprietaire } from "@/lib/authz"
-import { AnnonceInput, IdInput ,QuestionInput,  ReponseInput} from "@/lib/shema"
+import { prisma } from "@/lib/prisma"
+import { exigerAgent, exigerUtilisateur } from "@/lib/session"
+import { filtreProprietaire, peutVoir } from "@/lib/authz"
+import { AnnonceInput, IdInput, QuestionInput, ReponseInput } from "@/lib/shema"
+import { erreursDe, valeursDuFormulaire, type EtatFormulaire } from "@/lib/form"
 
-
-// creerAnnonce est une action côté serveur qui permet à un agent de créer une nouvelle annonce.
-export async function creerAnnonce(formData: FormData) {
+// Création d'une annonce (agent ou admin)
+export async function creerAnnonce(
+  _etat: EtatFormulaire,
+  formData: FormData
+): Promise<EtatFormulaire> {
+  // Authentification puis autorisation par rôle
   const user = await exigerAgent()
 
-  const parsed = AnnonceInput.safeParse({
-    titre: formData.get("titre"),
-    description: formData.get("description"),
-    typeBien: formData.get("typeBien"),
-    statutBien: formData.get("statutBien") ?? "DISPONIBLE",
-    prix: Number(formData.get("prix")),
-    dateDisponibilite: formData.get("dateDisponibilite"),
-  })
-  if (!parsed.success) {
-    return 
-  }
+  // Validation
+  const valeurs = valeursDuFormulaire(formData)
+  const parsed = AnnonceInput.safeParse({ statutBien: "DISPONIBLE", ...valeurs })
+  if (!parsed.success) return { erreurs: erreursDe(parsed.error), valeurs }
+
+  //  Écriture 
   const annonce = await prisma.annonce.create({
     data: { ...parsed.data, auteurId: user.id },
   })
@@ -31,24 +31,22 @@ export async function creerAnnonce(formData: FormData) {
   redirect(`/annonces/${annonce.id}`)
 }
 
-// modifierAnnonce est une action côté serveur qui permet à un agent de modifier une annonce existante. Elle prend en entrée l'identifiant brut de l'annonce et les données du formulaire, puis effectue les étapes suivantes :
-export async function modifierAnnonce(rawId: unknown, formData: FormData) {
-   const user = await exigerAgent()
+// Modification : le propriétaire (ou un admin) uniquement
+export async function modifierAnnonce(
+  rawId: unknown,
+  _etat: EtatFormulaire,
+  formData: FormData
+): Promise<EtatFormulaire> {
+  const user = await exigerAgent()
 
-   const id = IdInput.safeParse(rawId)
+  const id = IdInput.safeParse(rawId)
   if (!id.success) notFound()
 
-  const parsed = AnnonceInput.safeParse({
-    titre: formData.get("titre"),
-    description: formData.get("description"),
-    typeBien: formData.get("typeBien"),
-    statutBien: formData.get("statutBien") ?? "DISPONIBLE",
-    prix: Number(formData.get("prix")),
-    dateDisponibilite: formData.get("dateDisponibilite"),
-  })
-  if (!parsed.success) return
+  const valeurs = valeursDuFormulaire(formData)
+  const parsed = AnnonceInput.safeParse(valeurs)
+  if (!parsed.success) return { erreurs: erreursDe(parsed.error), valeurs }
 
-    const res = await prisma.annonce.updateMany({
+  const res = await prisma.annonce.updateMany({
     where: { id: id.data, ...filtreProprietaire(user) },
     data: parsed.data,
   })
@@ -59,107 +57,99 @@ export async function modifierAnnonce(rawId: unknown, formData: FormData) {
   redirect(`/annonces/${id.data}`)
 }
 
-
-
-//publier une annonce 
-export async function changerPublication(rawId: unknown, publier: boolean) {
-   const user = await exigerAgent()
-
+// Publier / dépublier
+export async function changerPublication(rawId: unknown, publier: unknown) {
+  const user = await exigerAgent()
 
   const id = IdInput.safeParse(rawId)
-  if (!id.success) notFound()
+  const publie = z.boolean().safeParse(publier) 
+  if (!id.success || !publie.success) notFound()
 
-   const res = await prisma.annonce.updateMany({
+  const res = await prisma.annonce.updateMany({
     where: { id: id.data, ...filtreProprietaire(user) },
-    data: { statutPublication: publier ? "PUBLIEE" : "BROUILLON" },
+    data: { statutPublication: publie.data ? "PUBLIEE" : "BROUILLON" },
   })
-  if (res.count === 0) notFound() 
+  if (res.count === 0) notFound()
 
   revalidatePath("/annonces")
   revalidatePath(`/annonces/${id.data}`)
 }
 
-
-
-
-
-
-
-//supprimer une annonce
+// Suppression
 export async function supprimerAnnonce(rawId: unknown) {
-  // Authentification puis autorisation par rôle
   const user = await exigerAgent()
 
-  //Validation de l'id
   const id = IdInput.safeParse(rawId)
   if (!id.success) notFound()
 
-  //Suppression 
   const res = await prisma.annonce.deleteMany({
     where: { id: id.data, ...filtreProprietaire(user) },
   })
-  if (res.count === 0) notFound() 
+  if (res.count === 0) notFound()
 
   revalidatePath("/annonces")
   redirect("/annonces")
 }
 
-
-
-//poser une question sur une annonce
-export async function poserQuestion(rawAnnonceId: unknown, formData: FormData) {
-  const user = await utilisateurCourant()
-  if (!user) throw new Error("Non autorisé")
+// Poser une question : tout utilisateur connecté qui peut VOIR l'annonce
+export async function poserQuestion(
+  rawAnnonceId: unknown,
+  _etat: EtatFormulaire,
+  formData: FormData
+): Promise<EtatFormulaire> {
+  const user = await exigerUtilisateur()
 
   const annonceId = IdInput.safeParse(rawAnnonceId)
   if (!annonceId.success) notFound()
 
-  const parsed = QuestionInput.safeParse({
-    contenu: formData.get("contenu"),
+  const annonce = await prisma.annonce.findUnique({
+    where: { id: annonceId.data },
+    select: { auteurId: true, statutPublication: true },
   })
-  if (!parsed.success) return 
+  if (!annonce || !peutVoir(user, annonce)) notFound()
+
+  const valeurs = valeursDuFormulaire(formData)
+  const parsed = QuestionInput.safeParse(valeurs)
+  if (!parsed.success) return { erreurs: erreursDe(parsed.error), valeurs }
 
   await prisma.question.create({
     data: {
       contenu: parsed.data.contenu,
       annonceId: annonceId.data,
-      auteurId: user.id, // L'ID vient de la session, bloquant l'usurpation[cite: 16]
+      auteurId: user.id, // vient de la session : impossible d'usurper
     },
   })
 
   revalidatePath(`/annonces/${annonceId.data}`)
+  return {} // succès : état vide, le formulaire se vide
 }
 
-  //reponse
-export async function repondreQuestion(rawQuestionId: unknown, formData: FormData) {
+// Répondre à une question : l'agent propriétaire de l'annonce (ou un admin)
+export async function repondreQuestion(
+  rawQuestionId: unknown,
+  _etat: EtatFormulaire,
+  formData: FormData
+): Promise<EtatFormulaire> {
   const user = await exigerAgent()
 
   const questionId = IdInput.safeParse(rawQuestionId)
   if (!questionId.success) notFound()
 
-  const parsed = ReponseInput.safeParse({
-    reponse: formData.get("reponse"),
-  })
-  if (!parsed.success) return
+  const valeurs = valeursDuFormulaire(formData)
+  const parsed = ReponseInput.safeParse(valeurs)
+  if (!parsed.success) return { erreurs: erreursDe(parsed.error), valeurs }
 
-  // updateMany avec relation empêche la faille IDOR (modification d'une annonce concurrente)[cite: 21]
+  // L'autorisation passe par la relation : l'annonce de la question doit être à toi
   const res = await prisma.question.updateMany({
-    where: {
-      id: questionId.data,
-      annonce: {
-        ...filtreProprietaire(user) 
-      }
-    },
-    data: {
-      reponse: parsed.data.reponse,
-    },
+    where: { id: questionId.data, annonce: { ...filtreProprietaire(user) } },
+    data: { reponse: parsed.data.reponse, repondueAt: new Date() },
   })
-
   if (res.count === 0) notFound()
 
-  // Revalidation de la page via l'ID de l'annonce
-  const question = await prisma.question.findUnique({ where: { id: questionId.data }})
-  if (question) {
-    revalidatePath(`/annonces/${question.annonceId}`)
-  }
+  const question = await prisma.question.findUnique({
+    where: { id: questionId.data },
+    select: { annonceId: true },
+  })
+  if (question) revalidatePath(`/annonces/${question.annonceId}`)
+  return {}
 }

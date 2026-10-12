@@ -1,18 +1,18 @@
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import { utilisateurCourant } from "@/lib/session"
+import { RechercheInput } from "@/lib/shema"
 
 const PAR_PAGE = 6
 
 export default async function AnnoncesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; type?: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
   const sp = await searchParams
-  const page = Math.max(1, Number(sp.page) || 1)
-  const type = sp.type === "VENTE" || sp.type === "LOCATION" ? sp.type : undefined
-
+  const { page, type } = RechercheInput.parse(sp)
+  
   const user = await utilisateurCourant()
 
 const visibilite = user?.role === "ADMIN"
