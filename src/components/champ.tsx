@@ -1,4 +1,4 @@
-import type { ReactNode } from "react"
+import { cloneElement, useId, type ReactElement } from "react"
 
 export function Champ({
   label,
@@ -7,18 +7,28 @@ export function Champ({
 }: {
   label: string
   erreurs?: string[]
-  children: ReactNode
+  children: ReactElement<Record<string, unknown>>
 }) {
+  const id = useId()
+  const idErreur = `${id}-erreur`
   const message = erreurs?.[0]
+
   return (
-    <label className="flex flex-col gap-1">
-      <span className="text-sm font-medium">{label}</span>
-      {children}
+    <div className="flex flex-col gap-1">
+      <label htmlFor={id} className="text-sm font-medium">
+        {label}
+      </label>
+      {/* On injecte id + aria-* dans le champ passé en enfant */}
+      {cloneElement(children, {
+        id,
+        "aria-invalid": message ? true : undefined,
+        "aria-describedby": message ? idErreur : undefined,
+      })}
       {message && (
-        <span role="alert" className="text-sm text-red-600">
+        <p id={idErreur} role="alert" className="text-sm text-red-600">
           {message}
-        </span>
+        </p>
       )}
-    </label>
+    </div>
   )
 }
