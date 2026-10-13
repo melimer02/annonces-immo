@@ -82,3 +82,23 @@ export const ConnexionInput = z.object({
   email: Email,
   password: z.string({ error: "Le mot de passe est requis" }).min(1, "Le mot de passe est requis"),
 })
+
+// ── Photos ────────────────────────────────────────────────────────
+
+export const TAILLE_MAX_PHOTO = 5 * 1024 * 1024 // 5 Mo
+export const MAX_PHOTOS = 10
+export const TYPES_PHOTO = ["image/jpeg", "image/png", "image/webp"]
+
+// Contrôles "bon marché" : taille, type DÉCLARÉ par le navigateur, nombre.
+// Le contenu réel est vérifié ensuite, dans l'action (voir detecterType).
+export const PhotosInput = z.object({
+  photos: z
+    .array(
+      z
+        .file()
+        .max(TAILLE_MAX_PHOTO, "Chaque photo doit faire 5 Mo au maximum")
+        .mime(TYPES_PHOTO, "Formats acceptés : JPEG, PNG ou WebP")
+    )
+    .min(1, "Choisissez au moins une photo")
+    .max(MAX_PHOTOS, `${MAX_PHOTOS} photos maximum par envoi`),
+})

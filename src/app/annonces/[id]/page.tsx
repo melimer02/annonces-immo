@@ -9,6 +9,9 @@ import { peutModifier } from "@/lib/authz"
 import { supprimerAnnonce , changerPublication,poserQuestion,repondreQuestion} from "../actions"
 import { FormTexte } from "@/components/form-texte"
 
+import { ajouterPhotos } from "../photos-actions"
+import { FormPhotos } from "@/components/form-photos"
+import { EtatVide } from "@/components/etat-vide"
 
 
 async function Questions({ annonceId ,isOwner}: { annonceId: number , isOwner: boolean }) {
@@ -19,7 +22,7 @@ async function Questions({ annonceId ,isOwner}: { annonceId: number , isOwner: b
   })
 
   if (questions.length === 0) {
-    return <p className="text-gray-500">Aucune question pour linstant.</p>
+    return <EtatVide titre="Aucune question pour l'instant" />
   }
 
   return (
@@ -32,7 +35,7 @@ async function Questions({ annonceId ,isOwner}: { annonceId: number , isOwner: b
             <p className="mt-1 text-gray-700">↳ {q.reponse}</p>
           ) : (
             <>
-              <p className="mt-1 italic text-gray-400">En attente de réponse</p>
+              <p className="mt-1 italic text-gray-600">En attente de réponse</p>
               
                {isOwner && (
                 <div className="mt-2">
@@ -41,6 +44,7 @@ async function Questions({ annonceId ,isOwner}: { annonceId: number , isOwner: b
                     nom="reponse"
                     placeholder="Votre réponse (min 5 caractères)..."
                     bouton="Répondre"
+                    label={`Réponse à la question de ${q.auteur.name}`}
                   />
                 </div>
               )}
@@ -63,7 +67,10 @@ if (!parsedId.success) notFound()
 
 const annonce = await prisma.annonce.findUnique({
   where: { id: parsedId.data },
-  include: { auteur: { select: { name: true } } },
+  include: {
+  auteur: { select: { name: true } },
+  photos: { orderBy: { createdAt: "asc" } },
+},
 })
 
 const user = await utilisateurCourant()
@@ -72,15 +79,45 @@ const isOwner = !!(user && peutModifier(user, annonce))
 
   return (
     <div className="p-6">
+      <Link href="/annonces" className="text-sm underline">
+        ← Retour aux annonces
+      </Link>
       <h1 className="text-2xl font-bold">{annonce.titre}</h1>
       <p className="text-gray-500">Publiée par {annonce.auteur.name}</p>
       <p className="mt-4">{annonce.description}</p>
       <p className="mt-2 text-xl font-semibold">
         {annonce.prix.toLocaleString("fr-FR")} €
       </p>
+      <section aria-labelledby="titre-photos" className="mt-6">
+        <h2 id="titre-photos" className="text-xl font-semibold">
+          Photos
+        </h2>
+        {annonce.photos.length === 0 ? (
+          <EtatVide titre="Aucune photo pour cette annonce" />
+        ) : (
+          <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {annonce.photos.map((p, i) => (
+              <li key={p.id}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={p.url}
+                  alt={`${annonce.titre} : photo ${i + 1} sur ${annonce.photos.length}`}
+                  loading="lazy"
+                  className="aspect-video w-full rounded object-cover"
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+        {isOwner && (
+          <div className="mt-4">
+            <FormPhotos action={ajouterPhotos.bind(null, annonce.id)} />
+          </div>
+        )}
+      </section>
 {/* Zone de gestion de l'annonce */}
       {isOwner && (
-        <div className="mt-4 flex gap-3">
+        <div className="mt-4 flex flex-wrap gap-3">
           <Link href={`/annonces/${annonce.id}/edit`} className="rounded border px-3 py-1">
             Modifier
           </Link>
@@ -110,6 +147,7 @@ const isOwner = !!(user && peutModifier(user, annonce))
             placeholder="Votre question (min 5 caractères)..."
             bouton="Envoyer la question"
             multiligne
+            label="Votre question"
           />
         </div>
       )}

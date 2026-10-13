@@ -2,7 +2,9 @@ import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import { utilisateurCourant } from "@/lib/session"
 import { RechercheInput } from "@/lib/shema"
-
+import { EtatVide } from "@/components/etat-vide"
+import { CarteAnnonce } from "@/components/carte-annonce"
+import { peutCreer } from "@/lib/authz"
 const PAR_PAGE = 6
 
 export default async function AnnoncesPage({
@@ -32,6 +34,7 @@ const where = {
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * PAR_PAGE,
       take: PAR_PAGE,
+      include: { photos: { orderBy: { createdAt: "asc" }, take: 1, select: { url: true } } },
     }),
     prisma.annonce.count({ where }),
   ])
@@ -56,28 +59,34 @@ const where = {
       </div>
 
       {annonces.length === 0 ? (
-        <p>Aucune annonce trouvée.</p>
+        <EtatVide
+          titre={type ? "Aucune annonce de ce type" : "Aucune annonce pour le moment"}
+          action={
+            type
+              ? { href: "/annonces", libelle: "Voir toutes les annonces" }
+              : user && peutCreer(user)
+                ? { href: "/annonces/new", libelle: "Créer la première annonce" }
+                : undefined
+          }
+        />
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {annonces.map((a) => (
-            <li key={a.id} className="rounded-lg border p-4 shadow">
-              <Link href={`/annonces/${a.id}`}>
-                <h2 className="text-lg font-semibold">{a.titre}</h2>
-                <p className="text-sm text-gray-500">{a.typeBien}</p>
-                <p className="text-gray-700">{a.prix.toLocaleString("fr-FR")} €</p>
-              </Link>
+            <li key={a.id}>
+              <CarteAnnonce annonce={a} />
             </li>
           ))}
         </ul>
       )}
 
       {totalPages > 1 && (
-        <nav className="flex gap-2 mt-6">
+        <nav aria-label="Pagination" className="mt-6 flex flex-wrap gap-2">
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
             <Link
               key={n}
               href={`/annonces?page=${n}${suffixeType}`}
               className={`rounded border px-3 py-1 ${n === page ? "bg-gray-800 text-white" : ""}`}
+              aria-current={n === page ? "page" : undefined}
             >
               {n}
             </Link>
