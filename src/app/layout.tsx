@@ -25,8 +25,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <a
+          href="#contenu"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-10 focus:rounded focus:bg-white focus:px-3 focus:py-2 focus:shadow"
+        >
+          Aller au contenu
+        </a>
         <Navbar />
-        {children}
+        <main id="contenu" className="mx-auto w-full max-w-5xl flex-1">
+          {children}
+        </main>
       </body>
     </html>
   );
