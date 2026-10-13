@@ -1,11 +1,10 @@
 import Link from "next/link"
-import { prisma } from "@/lib/prisma"
 import { utilisateurCourant } from "@/lib/session"
 import { RechercheInput } from "@/lib/shema"
+import { listerAnnonces, PAR_PAGE } from "@/lib/annonces"
 import { EtatVide } from "@/components/etat-vide"
 import { CarteAnnonce } from "@/components/carte-annonce"
 import { peutCreer } from "@/lib/authz"
-const PAR_PAGE = 6
 
 export default async function AnnoncesPage({
   searchParams,
@@ -14,30 +13,9 @@ export default async function AnnoncesPage({
 }) {
   const sp = await searchParams
   const { page, type } = RechercheInput.parse(sp)
-  
   const user = await utilisateurCourant()
 
-const visibilite = user?.role === "ADMIN"
-  ? [{ statutPublication: "PUBLIEE" as const }, { statutPublication: "BROUILLON" as const }]
-  : user
-  ? [{ statutPublication: "PUBLIEE" as const }, { statutPublication: "BROUILLON" as const, auteurId: user.id }]
-  : [{ statutPublication: "PUBLIEE" as const }]
-
-const where = {
-  OR: visibilite,
-  ...(type ? { typeBien: type } : {}),
-}
-
-  const [annonces, total] = await Promise.all([
-    prisma.annonce.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      skip: (page - 1) * PAR_PAGE,
-      take: PAR_PAGE,
-      include: { photos: { orderBy: { createdAt: "asc" }, take: 1, select: { url: true } } },
-    }),
-    prisma.annonce.count({ where }),
-  ])
+  const { annonces, total } = await listerAnnonces(user, { page, type })
 
   const totalPages = Math.max(1, Math.ceil(total / PAR_PAGE))
   const suffixeType = type ? `&type=${type}` : ""
