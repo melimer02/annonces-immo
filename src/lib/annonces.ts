@@ -3,7 +3,7 @@ import type { Acteur } from "@/lib/authz"
 
 export const PAR_PAGE = 6
 
-// Qui voit quoi dans la liste : publiées pour tous, brouillons pour leur auteur, tout pour l'admin
+
 export function filtreVisibilite(user: Acteur | null) {
   if (user?.role === "ADMIN") {
     return [{ statutPublication: "PUBLIEE" as const }, { statutPublication: "BROUILLON" as const }]

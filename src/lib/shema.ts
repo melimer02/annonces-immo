@@ -35,6 +35,14 @@ export const AnnonceInput = z.object({
     .positive("Le prix doit être supérieur à 0")
     .max(1_000_000_000, "Prix trop élevé"),
   dateDisponibilite: z.coerce.date({ error: "Date de disponibilité invalide" }),
+  // ── Validation de la localisation ──
+
+  ville: z
+    .string({ error: "La ville est requise" })
+    .trim()
+    .min(1, "Veuillez sélectionner une ville valide dans les suggestions"),
+    
+   
 })
 export type AnnonceInput = z.infer<typeof AnnonceInput>
 

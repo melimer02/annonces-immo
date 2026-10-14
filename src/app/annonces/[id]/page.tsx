@@ -83,6 +83,13 @@ const isOwner = !!(user && peutModifier(user, annonce))
         ← Retour aux annonces
       </Link>
       <h1 className="text-2xl font-bold">{annonce.titre}</h1>
+
+      {/* --- AFFICHAGE DE LA LOCALISATION --- */}
+      {(annonce.ville ) && (
+        <p className="text-gray-600 mt-1 flex items-center gap-1">
+          📍 {annonce.ville} 
+        </p>
+      )}
       <p className="text-gray-500">Publiée par {annonce.auteur.name}</p>
       <p className="mt-4">{annonce.description}</p>
       <p className="mt-2 text-xl font-semibold">
