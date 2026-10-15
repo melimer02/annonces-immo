@@ -30,7 +30,7 @@ export default async function AnnoncesPage({
   // Utilitaire pour la pagination (code du main)
   const lien = (n: number) => `/annonces?page=${n}${suffixeType}`
 
-  // Récupération des IDs favoris de l'utilisateur (votre code)
+  // Récupération des IDs favoris de l'utilisateur 
   const idsFavoris = user && user.role === "USER"
     ? await prisma.favori.findMany({
         where: { userId: user.id },
@@ -93,8 +93,7 @@ export default async function AnnoncesPage({
         <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {annonces.map((a) => (
             <li key={a.id}>
-              {/* Fusion parfaite : on passe vos props favoris ET les props d'édition */}
-              <CarteAnnonce 
+                <CarteAnnonce 
                 annonce={a} 
                 estFavori={idsFavoris.includes(a.id)}
                 userRole={user?.role}
