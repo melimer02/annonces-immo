@@ -4,11 +4,19 @@ import { auth } from "@/lib/auth"
 import { peutCreer, type Role } from "@/lib/authz"
 import { LIBELLE_ROLE } from "@/lib/affichage"
 import { deconnecter } from "@/app/logout/actions"
+import { utilisateurCourant } from "@/lib/session"
 
 export async function Navbar() {
   const session = await auth.api.getSession({ headers: await headers() })
   const role: Role = ((session?.user as { role?: Role } | undefined)?.role) ?? "USER"
-  const peutPublier = !!session && peutCreer({ id: session.user.id, role })
+  const user = await utilisateurCourant()
+  const peutPublier = !!user && peutCreer(user)
+  const libelle =
+  user?.role === "AGENT" && user.statutPro !== "VALIDE"
+    ? user.statutPro === "REFUSE"
+      ? "Agent refusé"
+      : "Agent en attente"
+    : LIBELLE_ROLE[role]
 
   return (
     <header className="border-b-4 border-primary bg-white shadow-sm">
@@ -41,7 +49,7 @@ export async function Navbar() {
               <div className="flex items-center gap-2 text-gray-800">
                 <span>{session.user.name}</span>
                 <span className="rounded-full border border-teal-200 bg-primary-soft px-2 py-0.5 text-xs font-bold text-primary">
-                  {LIBELLE_ROLE[role]}
+                  {libelle}
                 </span>
               </div>
               <form action={deconnecter}>

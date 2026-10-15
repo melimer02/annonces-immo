@@ -87,6 +87,8 @@ export const InscriptionInput = z.object({
     .string({ error: "Le mot de passe est requis" })
     .min(8, "Le mot de passe doit contenir au moins 8 caractères")
     .max(128, "Le mot de passe est trop long"),
+    role: z.enum(["USER", "AGENT"], { error: "Choisissez un type de compte" }),
+
 })
 
 export const ConnexionInput = z.object({
@@ -100,7 +102,6 @@ export const TAILLE_MAX_PHOTO = 5 * 1024 * 1024 // 5 Mo
 export const MAX_PHOTOS = 10
 export const TYPES_PHOTO = ["image/jpeg", "image/png", "image/webp"]
 
-// Contrôles "bon marché" : taille, type DÉCLARÉ par le navigateur, nombre.
 // Le contenu réel est vérifié ensuite, dans l'action (voir detecterType).
 export const PhotosInput = z.object({
   photos: z

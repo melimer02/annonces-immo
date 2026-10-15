@@ -1,10 +1,12 @@
 export type Role = "USER" | "AGENT" | "ADMIN"
-export type Acteur = { id: string; role: Role }
+export type Acteur = { id: string; role: Role, statutPro: StatutPro }
+export type StatutPro = "AUCUN" | "EN_ATTENTE" | "VALIDE" | "REFUSE"
 
-export const peutCreer = (a: Acteur) => a.role === "AGENT" || a.role === "ADMIN"
+
+export const peutCreer = (a: Acteur) => a.role === "AGENT" && a.statutPro === "VALIDE"
 
 export const peutModifier = (a: Acteur, annonce: { auteurId: string }) =>
-  a.role === "ADMIN" || (a.role === "AGENT" && annonce.auteurId === a.id)
+  a.role === "ADMIN" || (peutCreer(a) && annonce.auteurId === a.id)
 
 export const peutVoir = (
   a: Acteur | null,

@@ -4,7 +4,10 @@ import { exigerUtilisateur } from "@/lib/session"
 import { peutModifier } from "@/lib/authz"
 import { IdInput } from "@/lib/shema"
 import { modifierAnnonce } from "@/app/annonces/actions"
+import { ajouterPhotos } from "@/app/annonces/photos-actions"
 import { FormAnnonce } from "@/components/form-annonce"
+import { FormPhotos } from "@/components/form-photos"
+import { GestionPhotos } from "@/components/gestion-photos"
 import { LienRetour } from "@/components/lien-retour"
 
 export default async function EditPage({
@@ -19,7 +22,10 @@ export default async function EditPage({
   const id = IdInput.safeParse(rawId)
   if (!id.success) notFound()
 
-  const annonce = await prisma.annonce.findUnique({ where: { id: id.data } })
+  const annonce = await prisma.annonce.findUnique({
+    where: { id: id.data },
+    include: { photos: { orderBy: { createdAt: "asc" } } },
+  })
   if (!annonce || !peutModifier(user, annonce)) notFound()
 
   return (
@@ -40,6 +46,16 @@ export default async function EditPage({
           ville: annonce.ville ?? "",
         }}
       />
+
+      <section aria-labelledby="titre-photos" className="mx-auto mt-10 max-w-lg px-6">
+        <h2 id="titre-photos" className="mb-4 text-xl font-bold text-gray-900">
+          Photos ({annonce.photos.length})
+        </h2>
+        <GestionPhotos photos={annonce.photos} titre={annonce.titre} />
+        <div className="mt-6">
+          <FormPhotos action={ajouterPhotos.bind(null, annonce.id)} />
+        </div>
+      </section>
     </div>
   )
 }

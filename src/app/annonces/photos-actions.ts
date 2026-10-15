@@ -85,3 +85,33 @@ export async function ajouterPhotos(
   revalidatePath("/annonces")
   return { message: `${prepares.length} photo(s) ajoutée(s)` }
 }
+
+
+// Supprimer une photo : l'agent propriétaire de l'annonce (ou un admin) uniquement
+export async function supprimerPhoto(rawPhotoId: unknown) {
+  // 1 + 2. Authentification puis rôle
+  const user = await exigerAgent()
+
+  // 3. Validation
+  const photoId = IdInput.safeParse(rawPhotoId)
+  if (!photoId.success) notFound()
+
+  // Autorisation par la relation : l'annonce de la photo doit être à toi
+  const where = { id: photoId.data, annonce: { ...filtreProprietaire(user) } }
+
+  const photo = await prisma.photo.findFirst({
+    where,
+    select: { url: true, annonceId: true },
+  })
+  if (!photo) notFound() // inexistante OU pas à toi
+
+  const res = await prisma.photo.deleteMany({ where })
+  if (res.count === 0) notFound()
+
+  // Le nom du fichier vient de la base ; basename bloque tout "../" par sécurité
+  await unlink(path.join(DOSSIER_UPLOADS, path.basename(photo.url))).catch(() => {})
+
+  revalidatePath(`/annonces/${photo.annonceId}`)
+  revalidatePath(`/annonces/${photo.annonceId}/edit`)
+  revalidatePath("/annonces")
+}
