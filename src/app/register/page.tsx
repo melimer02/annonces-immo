@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { FormRegister } from "@/components/form-register"
+import { BoutonsSociaux } from "@/components/Boutton/boutons-sociaux"
 
 export default function RegisterPage() {
   return (
@@ -10,6 +11,7 @@ export default function RegisterPage() {
           Posez vos questions aux agents en quelques secondes.
         </p>
         <FormRegister />
+         <BoutonsSociaux />
       </div>
       <p className="mt-4 text-center text-sm text-gray-700">
         Déjà un compte ?{" "}
