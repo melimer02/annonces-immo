@@ -11,19 +11,19 @@ export function FormLogin() {
   const v = etat.valeurs ?? {}
 
   return (
-    <form action={formAction} noValidate className="flex flex-col gap-3">
+    <form action={formAction} noValidate className="space-y-4">
       {etat.message && (
-        <p role="alert" className="rounded border border-red-300 bg-red-50 p-2 text-sm text-red-700">
+        <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
           {etat.message}
         </p>
       )}
       <Champ label="Email" erreurs={e.email}>
-        <input name="email" type="email" defaultValue={v.email} className="border rounded p-2" />
+        <input name="email" type="email" autoComplete="email" defaultValue={v.email} className="champ" />
       </Champ>
       <Champ label="Mot de passe" erreurs={e.password}>
-        <input name="password" type="password" className="border rounded p-2" />
+        <input name="password" type="password" autoComplete="current-password" className="champ" />
       </Champ>
-      <button type="submit" disabled={enCours} className="rounded bg-gray-800 text-white py-2 disabled:opacity-50">
+      <button type="submit" disabled={enCours} className="btn btn-primary w-full py-3 text-base">
         {enCours ? "Connexion…" : "Se connecter"}
       </button>
     </form>

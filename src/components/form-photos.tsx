@@ -28,8 +28,8 @@ export function FormPhotos({ action }: Props) {
         onDragEnter={() => setSurvol(true)}
         onDragLeave={() => setSurvol(false)}
         onDrop={() => setSurvol(false)}
-        className={`relative rounded-lg border-2 border-dashed p-6 text-center focus-within:ring-2 focus-within:ring-gray-800 ${
-          survol ? "border-gray-800 bg-gray-100" : "border-gray-300"
+        className={`relative rounded-xl border-2 border-dashed p-6 text-center text-gray-700 transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary ${
+          survol ? "border-primary bg-primary-soft" : "border-gray-300 bg-white"
         }`}
       >
         <p aria-hidden="true">Glissez-déposez vos photos ici, ou cliquez pour parcourir</p>
@@ -73,7 +73,7 @@ export function FormPhotos({ action }: Props) {
       <button
         type="submit"
         disabled={enCours}
-        className="self-start rounded bg-gray-800 px-3 py-1 text-white disabled:opacity-50"
+        className="btn btn-primary self-start"
       >
         {enCours ? "Envoi en cours…" : "Envoyer les photos"}
       </button>

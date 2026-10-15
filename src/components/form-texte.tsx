@@ -25,25 +25,21 @@ export function FormTexte({ action, nom, label, placeholder, bouton, multiligne 
     defaultValue: etat.valeurs?.[nom],
     "aria-invalid": message ? true : undefined,
     "aria-describedby": message ? idErreur : undefined,
-    className: "border rounded p-2" + (message ? " border-red-500" : ""),
+    className: "champ", // la bordure rouge (aria-invalid) est définie dans globals.css
   }
 
   return (
-    <form action={formAction} noValidate className="flex max-w-md flex-col gap-1">
+    <form action={formAction} noValidate className="flex flex-col gap-2">
       <label htmlFor={id} className="sr-only">
         {label}
       </label>
       {multiligne ? <textarea rows={3} {...champ} /> : <input {...champ} />}
       {message && (
-        <p id={idErreur} role="alert" className="text-sm text-red-600">
+        <p id={idErreur} role="alert" className="text-sm text-red-700">
           {message}
         </p>
       )}
-      <button
-        type="submit"
-        disabled={enCours}
-        className="self-start rounded bg-gray-800 px-3 py-1 text-white disabled:opacity-50"
-      >
+      <button type="submit" disabled={enCours} className="btn btn-primary self-start">
         {enCours ? "Envoi…" : bouton}
       </button>
     </form>

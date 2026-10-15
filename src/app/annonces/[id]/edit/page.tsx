@@ -5,6 +5,7 @@ import { peutModifier } from "@/lib/authz"
 import { IdInput } from "@/lib/shema"
 import { modifierAnnonce } from "@/app/annonces/actions"
 import { FormAnnonce } from "@/components/form-annonce"
+import { LienRetour } from "@/components/lien-retour"
 
 export default async function EditPage({
   params,
@@ -22,18 +23,23 @@ export default async function EditPage({
   if (!annonce || !peutModifier(user, annonce)) notFound()
 
   return (
-    <FormAnnonce
-      action={modifierAnnonce.bind(null, annonce.id)}
-      bouton="Enregistrer"
-      avecStatutBien
-      valeursInitiales={{
-        titre: annonce.titre,
-        description: annonce.description,
-        prix: String(annonce.prix),
-        dateDisponibilite: annonce.dateDisponibilite.toISOString().slice(0, 10),
-        typeBien: annonce.typeBien,
-        statutBien: annonce.statutBien,
-      }}
-    />
+    <div className="mx-auto max-w-2xl px-4 py-8">
+      <LienRetour href={`/annonces/${annonce.id}`}>Retour à l&apos;annonce</LienRetour>
+      <h1 className="mb-6 text-3xl font-extrabold text-gray-900">Modifier l&apos;annonce</h1>
+      <FormAnnonce
+        action={modifierAnnonce.bind(null, annonce.id)}
+        bouton="Enregistrer"
+        avecStatutBien
+        valeursInitiales={{
+          titre: annonce.titre,
+          description: annonce.description,
+          prix: String(annonce.prix),
+          dateDisponibilite: annonce.dateDisponibilite.toISOString().slice(0, 10),
+          typeBien: annonce.typeBien,
+          statutBien: annonce.statutBien,
+          ville: annonce.ville ?? "",
+        }}
+      />
+    </div>
   )
 }

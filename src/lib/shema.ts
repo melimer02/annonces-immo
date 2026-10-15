@@ -37,11 +37,14 @@ export const AnnonceInput = z.object({
   dateDisponibilite: z.coerce.date({ error: "Date de disponibilité invalide" }),
   // ── Validation de la localisation ──
 
+  // ── Localisation ──
+  // Lettres (accents compris), chiffres, espace, tiret, apostrophe : "Saint-Étienne", "L'Aigle"
   ville: z
     .string({ error: "La ville est requise" })
     .trim()
-    .min(1, "Veuillez sélectionner une ville valide dans les suggestions"),
-    
+    .min(1, "Choisissez la ville du bien dans les suggestions")
+    .max(80, "Nom de ville trop long")
+    .regex(/^[\p{L}0-9][\p{L}0-9' .-]*$/u, "Nom de ville invalide"),
    
 })
 export type AnnonceInput = z.infer<typeof AnnonceInput>
