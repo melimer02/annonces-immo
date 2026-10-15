@@ -11,6 +11,8 @@ export async function Navbar() {
   const role: Role = ((session?.user as { role?: Role } | undefined)?.role) ?? "USER"
   const user = await utilisateurCourant()
   const peutPublier = !!user && peutCreer(user)
+  const peutDevenirAgent = !user || user.role === "USER"
+
   const libelle =
   user?.role === "AGENT" && user.statutPro !== "VALIDE"
     ? user.statutPro === "REFUSE"
@@ -40,6 +42,13 @@ export async function Navbar() {
             <Link href="/favoris" className="text-sm underline hover:text-gray-600">
               Mes favoris
             </Link> 
+          )}
+
+        
+          {peutDevenirAgent && (
+          <Link href="/agent" className="text-sm font-medium underline hover:text-gray-600">
+          Devenir agent
+          </Link>
           )}
         </div>
 

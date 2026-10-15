@@ -16,19 +16,13 @@ export async function inscrire(
   const parsed = InscriptionInput.safeParse(valeursDuFormulaire(formData))
   if (!parsed.success) return { erreurs: erreursDe(parsed.error), valeurs }
 
-  const { role, ...compte } = parsed.data
-  console.log("ROLE REÇU :", role)
-  try {
-    const res = await auth.api.signUpEmail({ body: compte })
-   console.log("COMPTE CRÉÉ :", res.user.id)
+  
 
-    if (role === "AGENT") {
-      await prisma.user.update({
-        where: { id: res.user.id },
-        data: { role: "AGENT", statutPro: "EN_ATTENTE" },
-      })
-         console.log("AGENT MIS À JOUR")
-    }
+  try {
+     await auth.api.signUpEmail({ body: parsed.data })
+  
+
+ 
    } catch (e) {
      console.error("ERREUR INSCRIPTION :", e)
     if (e instanceof APIError) {
@@ -43,7 +37,7 @@ export async function inscrire(
     }
     throw e
   }
+redirect("/annonces")
 
 
-  redirect(role === "AGENT" ? "/en-attente" : "/annonces")
 }

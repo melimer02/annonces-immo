@@ -27,7 +27,7 @@ export default async function AnnoncesPage({
   const totalPages = Math.max(1, Math.ceil(total / PAR_PAGE))
   const suffixeType = type ? `&type=${type}` : ""
   
-  // Utilitaire pour la pagination (code du main)
+  // Utilitaire pour la pagination (
   const lien = (n: number) => `/annonces?page=${n}${suffixeType}`
 
   // Récupération des IDs favoris de l'utilisateur 

@@ -87,8 +87,7 @@ export const InscriptionInput = z.object({
     .string({ error: "Le mot de passe est requis" })
     .min(8, "Le mot de passe doit contenir au moins 8 caractères")
     .max(128, "Le mot de passe est trop long"),
-    role: z.enum(["USER", "AGENT"], { error: "Choisissez un type de compte" }),
-
+    
 })
 
 export const ConnexionInput = z.object({
