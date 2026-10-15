@@ -36,4 +36,3 @@ socialProviders: {
 
   plugins: [nextCookies()],
 })
-console.log("GITHUB :", process.env.GITHUB_CLIENT_ID?.length, process.env.GITHUB_CLIENT_SECRET?.length)
