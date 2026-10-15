@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { prisma } from "@/lib/prisma"
 import { utilisateurCourant } from "@/lib/session"
 import { RechercheInput } from "@/lib/shema"
 import { listerAnnonces, PAR_PAGE } from "@/lib/annonces"
@@ -19,6 +20,14 @@ export default async function AnnoncesPage({
 
   const totalPages = Math.max(1, Math.ceil(total / PAR_PAGE))
   const suffixeType = type ? `&type=${type}` : ""
+  
+  // --- NOUVEAU : Récupération des IDs favoris de l'utilisateur ---
+  const idsFavoris = user && user.role === "USER"
+    ? await prisma.favori.findMany({
+        where: { userId: user.id },
+        select: { annonceId: true }
+      }).then(favoris => favoris.map(f => f.annonceId))
+    : []
 
   return (
     <div className="p-6">
@@ -51,7 +60,11 @@ export default async function AnnoncesPage({
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {annonces.map((a) => (
             <li key={a.id}>
-              <CarteAnnonce annonce={a} />
+               <CarteAnnonce 
+                annonce={a} 
+                estFavori={idsFavoris.includes(a.id)}
+                userRole={user?.role}
+              />
             </li>
           ))}
         </ul>

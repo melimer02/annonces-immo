@@ -116,7 +116,7 @@ export async function poserQuestion(
     data: {
       contenu: parsed.data.contenu,
       annonceId: annonceId.data,
-      auteurId: user.id, // vient de la session : impossible d'usurper
+      auteurId: user.id, // vient de la session 
     },
   })
 
@@ -152,4 +152,27 @@ export async function repondreQuestion(
   })
   if (question) revalidatePath(`/annonces/${question.annonceId}`)
   return {}
+}
+
+//-favoris 
+export async function basculerFavori(rawAnnonceId: unknown) {
+  const user = await exigerUtilisateur()
+  
+  const id = IdInput.safeParse(rawAnnonceId)
+  if (!id.success) return
+
+  const favoriExistant = await prisma.favori.findUnique({
+    where: { userId_annonceId: { userId: user.id, annonceId: id.data } }
+  })
+
+  if (favoriExistant) {
+    await prisma.favori.delete({ where: { id: favoriExistant.id } })
+  } else {
+    await prisma.favori.create({
+      data: { userId: user.id, annonceId: id.data }
+    })
+  }
+
+ //reactualiser la page pour refléter le changement de favori
+  revalidatePath(`/annonces/${id.data}`)
 }

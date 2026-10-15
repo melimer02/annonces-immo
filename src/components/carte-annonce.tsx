@@ -1,6 +1,5 @@
 import Link from "next/link"
-
-const LIBELLE_TYPE: Record<string, string> = { VENTE: "Vente", LOCATION: "Location" }
+import { BoutonFavori } from "@/components/Boutton/bouton-favori"
 
 type Props = {
   annonce: {
@@ -11,34 +10,51 @@ type Props = {
     statutPublication: string
     photos: { url: string }[]
   }
+  estFavori?: boolean
+  userRole?: string
 }
 
-export function CarteAnnonce({ annonce }: Props) {
-  const photo = annonce.photos[0]
+export function CarteAnnonce({ annonce, estFavori = false, userRole }: Props) {
+  // Récupère la première photo ou une image par défaut
+  const imageCover = annonce.photos?.[0]?.url || "/placeholder.jpg"
 
   return (
-    <article className="h-full overflow-hidden rounded-lg border shadow transition hover:bg-gray-50">
-      <Link href={`/annonces/${annonce.id}`} className="block h-full">
-        {photo ? (
-          // alt vide : image décorative, le titre ci-dessous nomme déjà le lien
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={photo.url} alt="" loading="lazy" className="aspect-video w-full object-cover" />
-        ) : (
-          <div className="flex aspect-video w-full items-center justify-center bg-gray-100 text-sm text-gray-600">
-            Pas de photo
+    <div className="border rounded-lg shadow-sm flex flex-col h-full overflow-hidden">
+      
+      {/* ZONE IMAGE (Relative pour pouvoir superposer le cœur) */}
+      <div className="relative aspect-video w-full bg-gray-100">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={imageCover}
+          alt={annonce.titre}
+          className="object-cover w-full h-full"
+        />
+        
+        {/* LE CŒUR SUPERPOSÉ EN HAUT À DROITE */}
+        {userRole === "USER" && (
+          <div className="absolute top-2 right-2 z-10">
+            <BoutonFavori 
+              annonceId={annonce.id} 
+              estFavoriInitial={estFavori ?? false} 
+              compact={true} // Active le mode "icône uniquement"
+            />
           </div>
         )}
-        <div className="p-4">
-          <h2 className="text-lg font-semibold">
-            {annonce.titre}
-            {annonce.statutPublication === "BROUILLON" && (
-              <span className="ml-2 text-xs font-normal text-orange-700">(brouillon)</span>
-            )}
-          </h2>
-          <p className="text-sm text-gray-600">{LIBELLE_TYPE[annonce.typeBien] ?? annonce.typeBien}</p>
-          <p className="text-gray-800">{annonce.prix.toLocaleString("fr-FR")} €</p>
+      </div>
+
+      {/* ZONE TEXTE */}
+      <div className="p-4 flex flex-col flex-1">
+        <h3 className="font-bold text-lg">{annonce.titre}</h3>
+        <p className="text-gray-500 text-sm mt-1">{annonce.typeBien}</p>
+        <p className="font-semibold text-xl mt-2">{annonce.prix.toLocaleString("fr-FR")} €</p>
+        
+        <div className="mt-auto pt-4 flex justify-between items-end">
+          <Link href={`/annonces/${annonce.id}`} className="text-blue-600 underline text-sm">
+            Voir les détails
+          </Link>
         </div>
-      </Link>
-    </article>
+      </div>
+      
+    </div>
   )
 }

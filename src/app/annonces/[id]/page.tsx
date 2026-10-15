@@ -12,7 +12,7 @@ import { FormTexte } from "@/components/form-texte"
 import { ajouterPhotos } from "../photos-actions"
 import { FormPhotos } from "@/components/form-photos"
 import { EtatVide } from "@/components/etat-vide"
-
+import { BoutonFavori } from "@/components/Boutton/bouton-favori"
 
 async function Questions({ annonceId ,isOwner}: { annonceId: number , isOwner: boolean }) {
   const questions = await prisma.question.findMany({
@@ -77,6 +77,15 @@ const user = await utilisateurCourant()
 if (!annonce || !peutVoir(user, annonce)) notFound()
 const isOwner = !!(user && peutModifier(user, annonce))
 
+
+
+const estFavori = user && user.role === "USER"
+    ? await prisma.favori.findUnique({
+        where: { userId_annonceId: { userId: user.id, annonceId: annonce.id } }
+      }).then(f => !!f)
+    : false
+
+
   return (
     <div className="p-6">
       <Link href="/annonces" className="text-sm underline">
@@ -84,14 +93,22 @@ const isOwner = !!(user && peutModifier(user, annonce))
       </Link>
       <h1 className="text-2xl font-bold">{annonce.titre}</h1>
 
-      {/* --- AFFICHAGE DE LA LOCALISATION --- */}
-      {(annonce.ville ) && (
-        <p className="text-gray-600 mt-1 flex items-center gap-1">
-          📍 {annonce.ville} 
-        </p>
-      )}
-      <p className="text-gray-500">Publiée par {annonce.auteur.name}</p>
-      <p className="mt-4">{annonce.description}</p>
+      <div className="flex justify-between items-start mt-4 mb-4">
+        <div>
+          <h1 className="text-2xl font-bold">{annonce.titre}</h1>
+          {(annonce.ville ) && (
+            <p className="text-gray-600 mt-1 flex items-center gap-1">
+              📍 {annonce.ville} 
+            </p>
+          )}
+          <p className="text-gray-500">Publiée par {annonce.auteur.name}</p>
+        </div>
+        {/* Le bouton s'affiche uniquement pour les utilisateurs normaux[cite: 2] */}
+        {user?.role === "USER" && (
+          <BoutonFavori annonceId={annonce.id} estFavoriInitial={estFavori} />
+        )}
+      </div>
+       <p className="mt-4">{annonce.description}</p>
       <p className="mt-2 text-xl font-semibold">
         {annonce.prix.toLocaleString("fr-FR")} €
       </p>

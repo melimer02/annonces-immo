@@ -24,6 +24,11 @@ export async function Navbar() {
               Nouvelle annonce
             </Link>
           )}
+          {session && role === "USER" && (
+            <Link href="/favoris" className="text-sm underline hover:text-gray-600">
+              Mes favoris
+            </Link> 
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
