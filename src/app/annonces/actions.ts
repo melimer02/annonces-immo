@@ -9,6 +9,10 @@ import { filtreProprietaire, peutVoir } from "@/lib/authz"
 import { AnnonceInput, IdInput, QuestionInput, ReponseInput } from "@/lib/shema"
 import { erreursDe, valeursDuFormulaire, type EtatFormulaire } from "@/lib/form"
 
+import { unlink } from "node:fs/promises"
+import path from "node:path"
+import { DOSSIER_UPLOADS } from "@/lib/photos"
+
 // Création d'une annonce (agent ou admin)
 export async function creerAnnonce(
   _etat: EtatFormulaire,
@@ -82,10 +86,23 @@ export async function supprimerAnnonce(rawId: unknown) {
   const id = IdInput.safeParse(rawId)
   if (!id.success) notFound()
 
-  const res = await prisma.annonce.deleteMany({
-    where: { id: id.data, ...filtreProprietaire(user) },
+  const cible = { id: id.data, ...filtreProprietaire(user) }
+
+  // Les lignes Photo disparaissent avec l'annonce (cascade) : on note les fichiers AVANT
+  const photos = await prisma.photo.findMany({
+    where: { annonce: cible },
+    select: { url: true },
   })
+
+  const res = await prisma.annonce.deleteMany({ where: cible })
   if (res.count === 0) notFound()
+
+  // Puis on supprime les fichiers. Au mieux : une erreur de disque n'annule pas la suppression.
+  await Promise.all(
+    photos.map((p) =>
+      unlink(path.join(DOSSIER_UPLOADS, path.basename(p.url))).catch(() => {})
+    )
+  )
 
   revalidatePath("/annonces")
   redirect("/annonces")

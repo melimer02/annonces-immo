@@ -1,20 +1,11 @@
-"use client" 
+"use client" // useActionState + état local de l'autocomplétion de ville : des hooks → composant client
 
-import { useActionState, useState, useEffect } from "react"
+import { useActionState, useEffect, useId, useState, type KeyboardEvent } from "react"
 import { Champ } from "@/components/champ"
 import type { EtatFormulaire } from "@/lib/form"
 
 type Valeurs = Partial<
-  Record<
-    | "titre" 
-    | "description" 
-    | "prix" 
-    | "dateDisponibilite" 
-    | "typeBien" 
-    | "statutBien" 
-    | "ville", 
-    string
-  >
+  Record<"titre" | "description" | "prix" | "dateDisponibilite" | "typeBien" | "statutBien" | "ville", string>
 >
 
 type Props = {
@@ -24,124 +15,193 @@ type Props = {
   avecStatutBien?: boolean
 }
 
-// Format de la réponse de l'API Géo
-type Commune = {
-  nom: string
-  codesPostaux: string[]
-}
+// Réponse de l'API Géo (geo.api.gouv.fr)
+type Commune = { code: string; nom: string; codesPostaux?: string[] }
 
 export function FormAnnonce({ action, bouton, valeursInitiales, avecStatutBien = false }: Props) {
   const [etat, formAction, enCours] = useActionState(action, {} as EtatFormulaire)
   const e = etat.erreurs ?? {}
   const v: Valeurs = { ...valeursInitiales, ...etat.valeurs }
 
+  // ── Autocomplétion de la ville (modèle ARIA "combobox" avec liste) ──
+  const id = useId()
+  const idChamp = `${id}-ville`
+  const idListe = `${id}-liste`
+  const idAide = `${id}-aide`
+  const idErreur = `${id}-erreur`
 
-  const [rechercheVille, setRechercheVille] = useState(v.ville ?? "")
+  const [saisie, setSaisie] = useState(v.ville ?? "") // ce que l'utilisateur tape
+  const [villeChoisie, setVilleChoisie] = useState(v.ville ?? "") // ce qui sera envoyé
   const [suggestions, setSuggestions] = useState<Commune[]>([])
-  
-  // Ces valeurs invisibles seront envoyées au serveur
-  const [villeSelectionnee, setVilleSelectionnee] = useState(v.ville ?? "")
+  const [actif, setActif] = useState(-1) // suggestion surlignée au clavier
+  const [apiIndisponible, setApiIndisponible] = useState(false)
+  const [statut, setStatut] = useState("") // annonce vocale pour les lecteurs d'écran
 
-  // Interroge l'API quand l'utilisateur tape
-useEffect(() => {
-    // S'arrête sans déclencher de nouveau render
-    if (rechercheVille.length < 2 || rechercheVille === villeSelectionnee) {
-      return
-    }
+  useEffect(() => {
+    if (saisie.length < 2 || saisie === villeChoisie) return
 
-    const fetchVilles = async () => {
+    const controleur = new AbortController() // annule la requête précédente si on retape
+    const minuteur = setTimeout(async () => {
       try {
-        const res = await fetch(`https://geo.api.gouv.fr/communes?nom=${rechercheVille}&fields=nom&format=json&limit=5`)
-        const data = await res.json()
-        setSuggestions(data)
-      } catch (error) {
-        console.error("Erreur API Géo", error)
+        const url =
+          `https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(saisie)}` +
+          `&fields=nom,code,codesPostaux&boost=population&limit=5`
+        const reponse = await fetch(url, { signal: controleur.signal })
+        if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`)
+        const communes: Commune[] = await reponse.json()
+        setSuggestions(communes)
+        setActif(-1)
+        setApiIndisponible(false)
+        setStatut(communes.length > 0 ? `${communes.length} suggestion(s) disponible(s)` : "Aucune ville trouvée")
+      } catch {
+        if (controleur.signal.aborted) return
+        setApiIndisponible(true)
+        setSuggestions([])
       }
+    }, 250)
+
+    return () => {
+      clearTimeout(minuteur)
+      controleur.abort()
     }
+  }, [saisie, villeChoisie])
 
-    const timeout = setTimeout(fetchVilles, 200) 
-    return () => clearTimeout(timeout)
-  }, [rechercheVille, villeSelectionnee])
+  function changerSaisie(valeur: string) {
+    setSaisie(valeur)
+    setActif(-1)
+    // Retaper invalide le choix précédent. Sauf si l'API est en panne : saisie libre.
+    setVilleChoisie(apiIndisponible ? valeur.trim() : "")
+    if (valeur.length < 2) {
+      setSuggestions([])
+      setStatut("")
+    }
+  }
 
-  // Quand l'agent clique sur une suggestion
-  const selectionnerVille = (commune: Commune) => {
-    setVilleSelectionnee(commune.nom)
-    setRechercheVille(commune.nom) 
-    setSuggestions([]) 
+  function choisir(commune: Commune) {
+    setVilleChoisie(commune.nom)
+    setSaisie(commune.nom)
+    setSuggestions([])
+    setActif(-1)
+    setStatut(`${commune.nom} sélectionnée`)
+  }
+
+  function toucheClavier(ev: KeyboardEvent<HTMLInputElement>) {
+    if (suggestions.length === 0) return
+    if (ev.key === "ArrowDown") {
+      ev.preventDefault()
+      setActif((i) => (i + 1) % suggestions.length)
+    } else if (ev.key === "ArrowUp") {
+      ev.preventDefault()
+      setActif((i) => (i <= 0 ? suggestions.length - 1 : i - 1))
+    } else if (ev.key === "Enter" && actif >= 0) {
+      ev.preventDefault() // ne pas envoyer le formulaire : on choisit la suggestion
+      choisir(suggestions[actif])
+    } else if (ev.key === "Escape") {
+      setSuggestions([])
+      setActif(-1)
+    }
   }
 
   return (
-    <form action={formAction} noValidate className="flex flex-col gap-4 p-6 max-w-lg mx-auto">
+    <form action={formAction} noValidate className="carte space-y-5 p-6">
       <Champ label="Titre" erreurs={e.titre}>
-        <input name="titre" defaultValue={v.titre} className="border rounded p-2" />
+        <input name="titre" defaultValue={v.titre} className="champ" />
       </Champ>
 
       <Champ label="Description" erreurs={e.description}>
-        <textarea name="description" rows={5} defaultValue={v.description} className="border rounded p-2" />
+        <textarea name="description" rows={5} defaultValue={v.description} className="champ" />
       </Champ>
 
-      {/* --- SECTION LOCALISATION AVEC SUGGESTIONS --- */}
-      <div className="flex flex-col gap-3 p-4 bg-gray-50 border rounded-lg relative">
-        <h3 className="text-sm font-semibold text-gray-700 uppercase">Localisation</h3>
-        
-        <Champ label="Rechercher une ville" erreurs={e.ville}>
-          <input 
+      <fieldset className="space-y-2 rounded-lg border border-gray-200 bg-gray-50 p-4">
+        <legend className="px-1 text-sm font-semibold text-gray-800">Localisation</legend>
+
+        <label htmlFor={idChamp} className="text-sm font-medium">
+          Ville
+        </label>
+        <div className="relative">
+          <input
+            id={idChamp}
             type="text"
-            value={rechercheVille}
-            onChange={(event) => {
-              setRechercheVille(event.target.value)
-              // Si l'utilisateur efface, on réinitialise la sélection
-              if (event.target.value === "") {
-                setVilleSelectionnee("")
-              
-              }
-            }}
-            placeholder="Ex: Paris, Le Havre..." 
-            className="border rounded p-2" 
+            role="combobox"
+            aria-expanded={suggestions.length > 0}
+            aria-controls={idListe}
+            aria-autocomplete="list"
+            aria-activedescendant={actif >= 0 ? `${id}-option-${actif}` : undefined}
+            aria-invalid={e.ville ? true : undefined}
+            aria-describedby={e.ville ? `${idAide} ${idErreur}` : idAide}
+            value={saisie}
+            onChange={(ev) => changerSaisie(ev.target.value)}
+            onKeyDown={toucheClavier}
             autoComplete="off"
+            placeholder="Ex : Le Havre"
+            className="champ"
           />
-        </Champ>
 
-        {/* Le menu déroulant des suggestions par dessus le reste */}
-        {suggestions.length > 0 && (
-          <ul className="absolute z-10 top-[85px] left-4 right-4 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
-            {suggestions.map((commune) => (
-              <li 
-                key={`${commune.nom}`}
-                onClick={() => selectionnerVille(commune)}
-                className="p-3 hover:bg-blue-50 cursor-pointer border-b last:border-b-0"
-              >
-                <span className="font-medium">{commune.nom}</span> <span className="text-gray-500 text-sm"></span>
-              </li>
-            ))}
-          </ul>
-        )}
+          {suggestions.length > 0 && (
+            <ul
+              id={idListe}
+              role="listbox"
+              aria-label="Villes suggérées"
+              className="absolute left-0 right-0 z-10 mt-1 max-h-56 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg"
+            >
+              {suggestions.map((commune, i) => (
+                <li
+                  key={commune.code}
+                  id={`${id}-option-${i}`}
+                  role="option"
+                  aria-selected={i === actif}
+                  onClick={() => choisir(commune)}
+                  className={`cursor-pointer px-3 py-2 ${
+                    i === actif ? "bg-primary-soft text-primary" : "hover:bg-gray-50"
+                  }`}
+                >
+                  <span className="font-medium">{commune.nom}</span>
+                  {commune.codesPostaux?.[0] && (
+                    <span className="ml-2 text-sm text-gray-600">{commune.codesPostaux[0]}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
 
-        <input type="hidden" name="ville" value={villeSelectionnee} />
-       
-        {(villeSelectionnee ) && (
-          <p className="text-sm text-green-700 bg-green-50 p-2 rounded mt-1">
-            ✓ Sélection enregistrée : <strong>{villeSelectionnee}</strong>
+        <p id={idAide} className="text-sm text-gray-600">
+          {apiIndisponible
+            ? "Suggestions indisponibles : saisissez le nom de la ville."
+            : "Tapez au moins 2 lettres, puis choisissez une ville dans la liste (flèches + Entrée au clavier)."}
+        </p>
+
+        {e.ville?.[0] && (
+          <p id={idErreur} role="alert" className="text-sm text-red-700">
+            {e.ville[0]}
           </p>
         )}
-      </div>
-      {/* ------------------------------------------------ */}
 
-      <div className="flex gap-3">
-        <div className="flex-1">
-          <Champ label="Prix (€)" erreurs={e.prix}>
-            <input name="prix" type="number" step="any" defaultValue={v.prix} className="border rounded p-2 w-full" />
-          </Champ>
-        </div>
-        <div className="flex-1">
-          <Champ label="Date de disponibilité" erreurs={e.dateDisponibilite}>
-            <input name="dateDisponibilite" type="date" defaultValue={v.dateDisponibilite} className="border rounded p-2 w-full" />
-          </Champ>
-        </div>
+        {/* Seule la ville CHOISIE part au serveur, pas le texte en cours de frappe */}
+        <input type="hidden" name="ville" value={villeChoisie} />
+
+        {villeChoisie && (
+          <p className="rounded bg-green-50 px-2 py-1 text-sm text-green-800">
+            ✓ Ville retenue : <strong>{villeChoisie}</strong>
+          </p>
+        )}
+
+        <p role="status" className="sr-only">
+          {statut}
+        </p>
+      </fieldset>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Champ label="Prix (€)" erreurs={e.prix}>
+          <input name="prix" type="number" step="any" defaultValue={v.prix} className="champ" />
+        </Champ>
+        <Champ label="Date de disponibilité" erreurs={e.dateDisponibilite}>
+          <input name="dateDisponibilite" type="date" defaultValue={v.dateDisponibilite} className="champ" />
+        </Champ>
       </div>
 
       <Champ label="Type de bien" erreurs={e.typeBien}>
-        <select name="typeBien" defaultValue={v.typeBien ?? "VENTE"} className="border rounded p-2 bg-white">
+        <select name="typeBien" defaultValue={v.typeBien ?? "VENTE"} className="champ">
           <option value="VENTE">Vente</option>
           <option value="LOCATION">Location</option>
         </select>
@@ -149,7 +209,7 @@ useEffect(() => {
 
       {avecStatutBien && (
         <Champ label="Statut du bien" erreurs={e.statutBien}>
-          <select name="statutBien" defaultValue={v.statutBien ?? "DISPONIBLE"} className="border rounded p-2 bg-white">
+          <select name="statutBien" defaultValue={v.statutBien ?? "DISPONIBLE"} className="champ">
             <option value="DISPONIBLE">Disponible</option>
             <option value="LOUE">Loué</option>
             <option value="VENDU">Vendu</option>
@@ -157,11 +217,7 @@ useEffect(() => {
         </Champ>
       )}
 
-      <button
-        type="submit"
-        disabled={enCours}
-        className="rounded bg-blue-600 text-white py-3 mt-4 font-medium disabled:opacity-50 hover:bg-blue-700"
-      >
+      <button type="submit" disabled={enCours} className="btn btn-primary w-full py-3 text-base">
         {enCours ? "Enregistrement…" : bouton}
       </button>
     </form>

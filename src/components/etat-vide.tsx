@@ -8,10 +8,10 @@ export function EtatVide({
   action?: { href: string; libelle: string }
 }) {
   return (
-    <div className="rounded-lg border border-dashed p-8 text-center">
-      <p className="font-medium">{titre}</p>
+    <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 px-6 py-8 text-center">
+      <p className="text-lg font-semibold text-gray-900">{titre}</p>
       {action && (
-        <Link href={action.href} className="mt-2 inline-block text-sm underline">
+        <Link href={action.href} className="btn btn-primary mt-4">
           {action.libelle}
         </Link>
       )}

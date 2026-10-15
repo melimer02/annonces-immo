@@ -9,45 +9,71 @@ async function creerUtilisateur(email: string, name: string, password: string) {
 }
 
 async function main() {
-  // 1. Deux agents distincts (exigés pour tester l'autorisation)
+  console.log("Réinitialisation des comptes...")
+  
+  // 1. Création des agents
   const agent1 = await creerUtilisateur("agent1@immo.fr", "Agent Un", "motdepasse123")
   await prisma.user.update({ where: { id: agent1.id }, data: { role: "AGENT" } })
 
   const agent2 = await creerUtilisateur("agent2@immo.fr", "Agent Deux", "motdepasse123")
   await prisma.user.update({ where: { id: agent2.id }, data: { role: "AGENT" } })
 
-  // 2. Quelques USER (restent USER, rôle par défaut)
+  // 2. Création des utilisateurs simples
   const user1 = await creerUtilisateur("user1@immo.fr", "Client Un", "motdepasse123")
   const user2 = await creerUtilisateur("user2@immo.fr", "Client Deux", "motdepasse123")
 
-  // 3. Annonces réparties entre les deux agents
-  await prisma.annonce.create({
-    data: {
-      titre: "Appartement T3 lumineux",
-      description: "Bel appartement rénové, proche centre-ville.",
-      typeBien: "LOCATION",
-      statutPublication: "PUBLIEE",
-      statutBien: "DISPONIBLE",
-      prix: 850,
-      dateDisponibilite: new Date(),
-      auteurId: agent1.id,
-    },
-  })
+  const villes = ["Le Havre", "Rouen", "Paris", "Caen", "Bordeaux", "Saint-Étienne", "L'Aigle", "Aix-en-Provence"]
 
-  await prisma.annonce.create({
-    data: {
-      titre: "Maison avec jardin",
-      description: "Grande maison familiale avec jardin arboré.",
-      typeBien: "VENTE",
-      statutPublication: "PUBLIEE",
-      statutBien: "DISPONIBLE",
-      prix: 320000,
-      dateDisponibilite: new Date(),
-      auteurId: agent2.id,
-    },
-  })
+  // 10 images statiques et fiables (Picsum)
+  const poolImages = [
+    "https://picsum.photos/id/1040/800/500", // Maison / Château
+    "https://picsum.photos/id/1047/800/500", // Immeubles ville
+    "https://picsum.photos/id/1031/800/500", // Quartier urbain
+    "https://picsum.photos/id/122/800/500",  // Rue de nuit
+    "https://picsum.photos/id/164/800/500",  // Ville et canal
+    "https://picsum.photos/id/175/800/500",  // Intérieur antique
+    "https://picsum.photos/id/192/800/500",  // Façade immeuble
+    "https://picsum.photos/id/238/800/500",  // Vue métropole
+    "https://picsum.photos/id/256/800/500",  // Chalet montagne
+    "https://picsum.photos/id/274/800/500"   // Ville de nuit
+  ]
 
-  console.log("Seed terminé :", { agent1: agent1.email, agent2: agent2.email, user1: user1.email, user2: user2.email })
+  console.log("Génération de 50 annonces avec leurs photos...")
+
+  // 3. Boucle de création
+  for (let index = 0; index < 50; index++) {
+    const isVente = index % 2 === 0
+    const typeBien = isVente ? "VENTE" : "LOCATION"
+    const prix = isVente ? 150000 + (index * 5000) : 500 + (index * 20)
+    const auteurId = index % 2 === 0 ? agent1.id : agent2.id
+    const villeChoisie = villes[index % villes.length]
+
+    // Sélection de 2 images différentes dans le tableau de 10
+    const img1 = poolImages[index % poolImages.length]
+    const img2 = poolImages[(index + 1) % poolImages.length]
+
+    await prisma.annonce.create({
+      data: {
+        titre: `Annonce n°${index + 1} - ${isVente ? "Maison" : "Appartement"} T${(index % 5) + 1}`,
+        description: `Superbe bien immobilier situé à ${villeChoisie}. C'est l'annonce numéro ${index + 1} générée pour tester la pagination et l'affichage des images.`,
+        typeBien: typeBien,
+        statutPublication: index % 5 === 0 ? "BROUILLON" : "PUBLIEE", 
+        statutBien: "DISPONIBLE",
+        prix: prix,
+        dateDisponibilite: new Date(),
+        auteurId: auteurId,
+        ville: villeChoisie,
+        photos: {
+          create: [
+            { url: img1 },
+            { url: img2 }
+          ]
+        }
+      },
+    })
+  }
+
+  console.log("Seed terminé avec succès : 50 annonces créées !")
 }
 
 main()
@@ -58,8 +84,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect()
   })
-
-
-
-
-
