@@ -8,7 +8,7 @@ import { utilisateurCourant } from "@/lib/session"
 
 export async function devenirAgent() {
   const user = await utilisateurCourant()
-  if (!user) redirect("/register?suite=/devenir-agent")
+  if (!user) redirect("/register?suite=/agent")
 
   if (user.role === "USER") {
     await prisma.user.updateMany({
