@@ -8,7 +8,7 @@ import type { EtatFormulaire } from "@/lib/form"
 
 
 
-export function FormRegister({ suite }: { suite?: string }){
+export function FormRegister({ agent = false }: { agent?: boolean }) {
   const [etat, formAction, enCours] = useActionState(inscrire, {} as EtatFormulaire)
   const e = etat.erreurs ?? {}
   const v = etat.valeurs ?? {}
@@ -16,7 +16,7 @@ export function FormRegister({ suite }: { suite?: string }){
 
   return (
     <form action={formAction} noValidate className="space-y-4">
-       {suite && <input type="hidden" name="suite" value={suite} />}
+       {agent && <input type="hidden" name="devenirAgent" value="1"/>}
 
       {etat.message && (
         <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">

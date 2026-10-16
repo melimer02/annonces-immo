@@ -4,7 +4,7 @@
 import { mkdir, writeFile, unlink } from "node:fs/promises"
 import path from "node:path"
 import { randomUUID } from "node:crypto"
-import { PhotosInput, MAX_PHOTOS } from "@/lib/shema"
+import { PhotosInput, MAX_PHOTOS } from "@/lib/schemas"
 import { erreursDe, type ErreursChamps } from "@/lib/form"
 import { DOSSIER_UPLOADS, detecterType } from "@/lib/photos"
 

@@ -4,7 +4,7 @@ import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import { utilisateurCourant } from "@/lib/session"
 import { peutVoir, peutModifier } from "@/lib/authz"
-import { IdInput } from "@/lib/shema"
+import { IdInput } from "@/lib/schemas"
 import {
   CLASSE_STATUT_BIEN,
   LIBELLE_STATUT_BIEN,
@@ -236,7 +236,7 @@ export default async function AnnoncePage({ params }: { params: Promise<{ id: st
       </section>
 
       <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
-        {/* Résumé placé AVANT dans le HTML */}
+       
         <aside aria-label="Résumé de l'annonce" className="md:col-start-3 md:row-start-1">
           <div className="carte sticky top-6 p-6 shadow-lg">
             <p className="text-3xl font-extrabold text-gray-900">

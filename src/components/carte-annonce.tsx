@@ -87,13 +87,9 @@ export function CarteAnnonce({ annonce, estFavori = false, userRole, peutEditer 
         </div>
       </Link>
 
-      {/* 
-        LE CŒUR SUPERPOSÉ
-        Il est placé en absolu par rapport à la carte (grâce à relative sur <article>), 
-        et sorti du <Link> pour éviter que cliquer sur le bouton ne déclenche aussi le lien de la carte.
-      */}
+     
       {userRole === "USER" && (
-        <div className="absolute right-3 top-32 z-20"> {/* Ajustez 'top-32' selon la hauteur de votre image */}
+        <div className="absolute right-3 top-2 z-20"> 
            <div className="bg-white/90 rounded-full shadow-md p-1 hover:scale-110 transition-transform">
              <BoutonFavori 
                annonceId={annonce.id} 

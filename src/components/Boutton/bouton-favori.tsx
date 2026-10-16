@@ -1,7 +1,8 @@
 "use client"
 
 import { useOptimistic } from "react"
-import { basculerFavori } from "@/app/annonces/actions"
+import { basculerFavori } from "@/app/favoris/actions"
+import { Heart } from "lucide-react" // Import de l'icône Lucide
 
 type Props = {
   annonceId: number
@@ -25,20 +26,28 @@ export function BoutonFavori({ annonceId, estFavoriInitial, compact = false }: P
         title={estFavoriOptimiste ? "Retirer des favoris" : "Ajouter aux favoris"}
         className={
           compact 
-            // Design pour la petite carte 
-            ? `p-2 rounded-full bg-white/90 shadow hover:scale-110 transition-transform ${estFavoriOptimiste ? "text-red-500" : "text-gray-400"}`
-            // Design classique pour la page détaillée 
-            : `px-4 py-2 rounded border font-medium transition-colors ${
+          
+            ? "flex items-center justify-center p-2 "
+
+            : `flex items-center gap-2 px-4 py-2 rounded-lg border  ${
                 estFavoriOptimiste 
-                  ? "bg-red-50 text-red-600 border-red-200" 
-                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                  ? "bg-red-50 text-gray-500 border-pink-200" 
+                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 "
               }`
         }
       >
-        {compact ? (
-           <span className="text-xl leading-none block">{estFavoriOptimiste ? "❤️" : "🤍"}</span>
-        ) : (
-           <>{estFavoriOptimiste ? "❤️ Retiré des favoris" : "🤍 Ajouter aux favoris"}</>
+
+        <Heart 
+          className={`w-5 h-5 transition-all duration-300 ${
+            estFavoriOptimiste 
+              ? "fill-pink-300 text-pink-300 animate-pop" 
+              : "text-current" 
+          }`} 
+        />
+        
+
+        {!compact && (
+          <span>{estFavoriOptimiste ? "Retirer des favoris" : "Ajouter aux favoris"}</span>
         )}
       </button>
     </form>

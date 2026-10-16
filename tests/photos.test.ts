@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
 import { preparerPhotos, fichiersDuFormulaire } from "@/lib/photos-serveur"
-import { MAX_PHOTOS, TAILLE_MAX_PHOTO } from "@/lib/shema"
+import { MAX_PHOTOS, TAILLE_MAX_PHOTO } from "@/lib/schemas"
 import { NOM_PHOTO } from "@/lib/photos"
 
 // En-têtes réels (signatures) de chaque format, suivis de quelques octets

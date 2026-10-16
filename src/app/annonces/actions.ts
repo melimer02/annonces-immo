@@ -6,7 +6,7 @@ import { redirect, notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { exigerAgent, exigerUtilisateur } from "@/lib/session"
 import { filtreProprietaire, peutVoir } from "@/lib/authz"
-import { AnnonceInput, annonceModificationInput, IdInput, QuestionInput, ReponseInput } from "@/lib/shema"
+import { AnnonceInput, annonceModificationInput, IdInput, QuestionInput, ReponseInput } from "@/lib/schemas"
 import { erreursDe, valeursDuFormulaire, type EtatFormulaire } from "@/lib/form"
 import { ecrireSurDisque, fichiersDuFormulaire, preparerPhotos, supprimerFichiers } from "@/lib/photos-serveur"
 
@@ -191,40 +191,21 @@ export async function repondreQuestion(
   const parsed = ReponseInput.safeParse(valeurs)
   if (!parsed.success) return { erreurs: erreursDe(parsed.error), valeurs }
 
-  // L'autorisation passe par la relation : l'annonce de la question doit être à toi
-  const res = await prisma.question.updateMany({
-    where: { id: questionId.data, annonce: { ...filtreProprietaire(user) } },
-    data: { reponse: parsed.data.reponse, repondueAt: new Date() },
-  })
-  if (res.count === 0) notFound()
 
-  const question = await prisma.question.findUnique({
-    where: { id: questionId.data },
-    select: { annonceId: true },
-  })
-  if (question) revalidatePath(`/annonces/${question.annonceId}`)
+
+    const question = await prisma.question.findFirst({
+      where: { id: questionId.data, annonce: { ...filtreProprietaire(user) } },
+      select: { annonceId: true },
+    })
+    if (!question) notFound()
+
+    
+    await prisma.question.update({
+      where: { id: questionId.data },
+      data: { reponse: parsed.data.reponse, repondueAt: new Date() },
+    })
+
+  revalidatePath(`/annonces/${question.annonceId}`)
   return {}
 }
 
-//-favoris 
-export async function basculerFavori(rawAnnonceId: unknown) {
-  const user = await exigerUtilisateur()
-  
-  const id = IdInput.safeParse(rawAnnonceId)
-  if (!id.success) return
-
-  const favoriExistant = await prisma.favori.findUnique({
-    where: { userId_annonceId: { userId: user.id, annonceId: id.data } }
-  })
-
-  if (favoriExistant) {
-    await prisma.favori.delete({ where: { id: favoriExistant.id } })
-  } else {
-    await prisma.favori.create({
-      data: { userId: user.id, annonceId: id.data }
-    })
-  }
-
- //reactualiser la page pour refléter le changement de favori
-  revalidatePath(`/annonces/${id.data}`)
-}

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
 import { z } from "zod"
-import { AnnonceInput, annonceModificationInput } from "@/lib/shema"
+import { AnnonceInput, annonceModificationInput } from "@/lib/schemas"
 import { jourParis } from "@/lib/dates"
 
 // Décale un jour AAAA-MM-JJ de n jours (calcul en UTC, sans heure)

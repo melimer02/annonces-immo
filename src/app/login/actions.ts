@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation"
 import { APIError } from "better-auth/api"
 import { auth } from "@/lib/auth"
-import { ConnexionInput } from "@/lib/shema"
+import { ConnexionInput } from "@/lib/schemas"
 import { erreursDe, valeursDuFormulaire, type EtatFormulaire } from "@/lib/form"
 
 export async function connecter(

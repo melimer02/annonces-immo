@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import { utilisateurCourant } from "@/lib/session"
-import { RechercheInput } from "@/lib/shema"
+import { RechercheInput } from "@/lib/schemas"
 import { listerAnnonces, PAR_PAGE } from "@/lib/annonces"
 import { EtatVide } from "@/components/etat-vide"
 import { CarteAnnonce } from "@/components/carte-annonce"

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { AnnonceInput, IdInput } from "@/lib/shema"
+import { AnnonceInput, IdInput } from "@/lib/schemas"
 
 const valide = {
   titre: "Bel appartement T3",
