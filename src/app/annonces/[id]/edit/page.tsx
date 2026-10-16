@@ -5,10 +5,10 @@ import { peutModifier } from "@/lib/authz"
 import { IdInput } from "@/lib/schemas"
 import { modifierAnnonce } from "@/app/annonces/actions"
 import { ajouterPhotos } from "@/app/annonces/photos-actions"
-import { FormAnnonce } from "@/components/form-annonce"
-import { FormPhotos } from "@/components/form-photos"
-import { GestionPhotos } from "@/components/gestion-photos"
-import { LienRetour } from "@/components/lien-retour"
+import { FormAnnonce } from "@/components/annonces/form-annonce"
+import { FormPhotos } from "@/components/annonces/form-photos"
+import { GestionPhotos } from "@/components/annonces/gestion-photos"
+import { LienRetour } from "@/components/ui/lien-retour"
 
 export default async function EditPage({
   params,

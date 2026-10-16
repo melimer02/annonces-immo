@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { utilisateurCourant } from "@/lib/session"
-import { CarteAnnonce } from "@/components/carte-annonce"
-import { EtatVide } from "@/components/etat-vide"
+import { CarteAnnonce } from "@/components/annonces/carte-annonce"
+import { EtatVide } from "@/components/ui/etat-vide"
 import Link from "next/link"
 
 export default async function FavorisPage() {

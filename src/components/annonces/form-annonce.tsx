@@ -1,9 +1,9 @@
 "use client" // useActionState + état local de l'autocomplétion de ville : des hooks → composant client
 
 import { useActionState, useEffect, useId, useState, type KeyboardEvent } from "react"
-import { Champ } from "@/components/champ"
+import { Champ } from "@/components/ui/champ"
 import { jourParis } from "@/lib/dates"
-import { ChampPhotos, usePhotosChoisies } from "@/components/champ-photos"
+import { ChampPhotos, usePhotosChoisies } from "@/components/annonces/champ-photos"
 import type { EtatFormulaire } from "@/lib/form"
 
 type Valeurs = Partial<

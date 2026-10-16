@@ -101,12 +101,6 @@ enum StatutBien {
   VENDU
 }
 
-enum StatutPro {
-  AUCUN
-  EN_ATTENTE
-  VALIDE
-  REFUSE
-}
 
 
 model Annonce {

@@ -1,7 +1,7 @@
 "use client" // useActionState + état local : des hooks → composant client
 
 import { useActionState } from "react"
-import { ChampPhotos, usePhotosChoisies } from "@/components/champ-photos"
+import { ChampPhotos, usePhotosChoisies } from "@/components/annonces/champ-photos"
 import type { EtatFormulaire } from "@/lib/form"
 
 type Props = {

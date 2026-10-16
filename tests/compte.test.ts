@@ -49,13 +49,13 @@ describe("espace agent : mes annonces", () => {
   })
 
   it("« Mes brouillons » ne renvoie que ses propres brouillons", async () => {
-    expect(await titres(agentA, { auteurId: agentA.id, brouillonsSeulement: true })).toEqual([
+    expect(await titres(agentA, { auteurId: agentA.id, statutPublication: "BROUILLON"})).toEqual([
       "Brouillon-A",
     ])
   })
 
   it("un agent ne lit jamais les brouillons d'un autre, même en demandant son auteur", async () => {
-    expect(await titres(agentA, { auteurId: agentB.id, brouillonsSeulement: true })).toEqual([])
+    expect(await titres(agentA, { auteurId: agentB.id, statutPublication: "BROUILLON" })).toEqual([])
     expect(await titres(agentA, { auteurId: agentB.id })).toEqual(["Publiee-B"])
   })
 

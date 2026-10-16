@@ -3,7 +3,6 @@ import type { Acteur } from "@/lib/authz"
 
 export const PAR_PAGE = 6
 
-
 export function filtreVisibilite(user: Acteur | null) {
   if (user?.role === "ADMIN") {
     return [{ statutPublication: "PUBLIEE" as const }, { statutPublication: "BROUILLON" as const }]
@@ -24,26 +23,25 @@ export type FiltresAnnonces = {
   prixMin?: number
   prixMax?: number
   // Espace agent : uniquement les annonces de cet auteur.
-  // La valeur vient de la SESSION, jamais de l'URL.
   auteurId?: string
-  // Uniquement les brouillons
-  brouillonsSeulement?: boolean
+  // NOUVEAU : On remplace "brouillonsSeulement" par le statut exact qu'on veut
+  statutPublication?: "PUBLIEE" | "BROUILLON"
 }
 
 export async function listerAnnonces(
   user: Acteur | null,
-  { page, type, ville, prixMin, prixMax, auteurId, brouillonsSeulement }: FiltresAnnonces
+  { page, type, ville, prixMin, prixMax, auteurId, statutPublication }: FiltresAnnonces
 ) {
   const where = {
     OR: filtreVisibilite(user),
     ...(type ? { typeBien: type } : {}),
     ...(auteurId ? { auteurId } : {}),
-    ...(brouillonsSeulement ? { statutPublication: "BROUILLON" as const } : {}),
+    // NOUVEAU : Si on précise le statut, on l'applique ici
+    ...(statutPublication ? { statutPublication } : {}),
     ...(ville ? { ville: { contains: ville, mode: "insensitive" as const } } : {}),
     ...(prixMin !== undefined || prixMax !== undefined
       ? { prix: { gte: prixMin, lte: prixMax } }
       : {}),
-  
   }
 
   const [annonces, total] = await Promise.all([

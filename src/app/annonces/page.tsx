@@ -3,8 +3,8 @@ import { prisma } from "@/lib/prisma"
 import { utilisateurCourant } from "@/lib/session"
 import { RechercheInput } from "@/lib/schemas"
 import { listerAnnonces, PAR_PAGE } from "@/lib/annonces"
-import { EtatVide } from "@/components/etat-vide"
-import { CarteAnnonce } from "@/components/carte-annonce"
+import { EtatVide } from "@/components/ui/etat-vide"
+import { CarteAnnonce } from "@/components/annonces/carte-annonce"
 import { peutCreer, peutModifier } from "@/lib/authz"
 
 const FILTRES = [

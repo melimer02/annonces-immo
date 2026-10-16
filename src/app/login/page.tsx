@@ -1,6 +1,6 @@
 import Link from "next/link"
-import { FormLogin } from "@/components/form-login"
-import { BoutonsSociaux } from "@/components/Boutton/boutons-sociaux"
+import { FormLogin } from "@/components/auth/form-login"
+import { BoutonsSociaux } from "@/components/ui/boutons-sociaux"
 export default function LoginPage() {
   return (
     <div className="mx-auto max-w-md px-4 py-12">

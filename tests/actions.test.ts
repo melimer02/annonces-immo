@@ -50,6 +50,7 @@ const champsValides = {
   statutBien: "DISPONIBLE",
   prix: "250000",
   dateDisponibilite: "2026-12-01",
+  ville: "Rouen",
 }
 
 const donnees = (auteurId: string, extra: Record<string, unknown> = {}) => ({
@@ -58,6 +59,7 @@ const donnees = (auteurId: string, extra: Record<string, unknown> = {}) => ({
   typeBien: "VENTE" as const,
   prix: 200000,
   dateDisponibilite: new Date("2026-12-01"),
+  ville : "Rouen",
   auteurId,
   ...extra,
 })

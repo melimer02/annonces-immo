@@ -13,9 +13,9 @@ import {
   formatPrix,
 } from "@/lib/affichage"
 import { supprimerAnnonce, changerPublication, poserQuestion, repondreQuestion } from "../actions"
-import { FormTexte } from "@/components/form-texte"
-import { EtatVide } from "@/components/etat-vide"
-import { BoutonFavori } from "@/components/Boutton/bouton-favori"
+import { FormTexte } from "@/components/ui/form-texte"
+import { EtatVide } from "@/components/ui/etat-vide"
+import { BoutonFavori } from "@/components/ui/bouton-favori"
 
 // Icônes décoratives
 const icone = {

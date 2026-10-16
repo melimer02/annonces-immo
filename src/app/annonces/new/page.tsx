@@ -1,7 +1,7 @@
 import { exigerAgent } from "@/lib/session"
 import { creerAnnonce } from "../actions"
-import { FormAnnonce } from "@/components/form-annonce"
-import { LienRetour } from "@/components/lien-retour"
+import { FormAnnonce } from "@/components/annonces/form-annonce"
+import { LienRetour } from "@/components/ui/lien-retour"
 
 export default async function NouvelleAnnoncePage() {
   await exigerAgent() // la page est protégée aussi (la vraie sécurité reste dans l'action)

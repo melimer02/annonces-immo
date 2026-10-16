@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { BoutonFavori } from "@/components/Boutton/bouton-favori"
+import { BoutonFavori } from "@/components/ui/bouton-favori"
 import {
   CLASSE_STATUT_BIEN,
   LIBELLE_STATUT_BIEN,

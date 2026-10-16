@@ -25,7 +25,7 @@ export function FormTexte({ action, nom, label, placeholder, bouton, multiligne 
     defaultValue: etat.valeurs?.[nom],
     "aria-invalid": message ? true : undefined,
     "aria-describedby": message ? idErreur : undefined,
-    className: "champ", // la bordure rouge (aria-invalid) est définie dans globals.css
+    className: "champ", 
   }
 
   return (

@@ -4,9 +4,9 @@ import { exigerAgent } from "@/lib/session"
 import { peutModifier } from "@/lib/authz"
 import { CompteInput } from "@/lib/schemas"
 import { listerAnnonces, PAR_PAGE } from "@/lib/annonces"
-import { CarteAnnonce } from "@/components/carte-annonce"
-import { EtatVide } from "@/components/etat-vide"
-import { Pagination } from "@/components/pagination"
+import { CarteAnnonce } from "@/components/annonces/carte-annonce"
+import { EtatVide } from "@/components/ui/etat-vide"
+import { Pagination } from "@/components/ui/pagination"
 
 export const metadata = { title: "Mon compte" }
 
@@ -15,18 +15,22 @@ export default async function ComptePage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  // Authentification + rôle : un simple utilisateur ou un visiteur n'a rien à faire ici.
-  // L'agent affiché est CELUI DE LA SESSION : aucun identifiant ne passe par l'URL.
+
   const user = await exigerAgent()
 
   const { page, vue } = CompteInput.parse(await searchParams)
   const brouillons = vue === "brouillons"
 
-  const [{ annonces, total }, compte, nbBrouillons, nbTotal] = await Promise.all([
-    listerAnnonces(user, { page, auteurId: user.id, brouillonsSeulement: brouillons }),
+  const [{ annonces, total }, compte, nbBrouillons, nbPubliees] = await Promise.all([
+    listerAnnonces(user, { 
+      page, 
+      auteurId: user.id, 
+      // Ici on passe le bon statut selon l'onglet
+      statutPublication: brouillons ? "BROUILLON" : "PUBLIEE" 
+    }),
     prisma.user.findUnique({ where: { id: user.id }, select: { name: true } }),
     prisma.annonce.count({ where: { auteurId: user.id, statutPublication: "BROUILLON" } }),
-    prisma.annonce.count({ where: { auteurId: user.id } }),
+    prisma.annonce.count({ where: { auteurId: user.id, statutPublication: "PUBLIEE" } }), 
   ])
 
   const totalPages = Math.max(1, Math.ceil(total / PAR_PAGE))
@@ -40,7 +44,7 @@ export default async function ComptePage({
   }
 
   const onglets = [
-    { libelle: "Toutes mes annonces", nb: nbTotal, href: "/compte", actif: !brouillons },
+    { libelle: "Mes annonces", nb: nbPubliees, href: "/compte", actif: !brouillons },
     { libelle: "Mes brouillons", nb: nbBrouillons, href: "/compte?vue=brouillons", actif: brouillons },
   ]
 
@@ -49,7 +53,7 @@ export default async function ComptePage({
       <header className="mb-8 rounded-2xl bg-primary-soft px-6 py-8">
         <h1 className="text-3xl font-extrabold text-gray-900">Mon compte</h1>
         <p className="mt-2 text-gray-700">
-          {compte?.name} · {nbTotal} annonce{nbTotal > 1 ? "s" : ""}, dont {nbBrouillons} brouillon
+          {compte?.name} · {nbPubliees} annonce{nbPubliees > 1 ? "s" : ""}, dont {nbBrouillons} brouillon
           {nbBrouillons > 1 ? "s" : ""}
         </p>
       </header>

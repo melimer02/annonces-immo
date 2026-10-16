@@ -1,6 +1,6 @@
 import Link from "next/link"
-import { FormRegister } from "@/components/form-register"
-import { BoutonsSociaux } from "@/components/Boutton/boutons-sociaux"
+import { FormRegister } from "@/components/auth/form-register"
+import { BoutonsSociaux } from "@/components/ui/boutons-sociaux"
 
 export default async function RegisterPage({
   searchParams,
