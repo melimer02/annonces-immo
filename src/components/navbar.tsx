@@ -52,7 +52,17 @@ export async function Navbar() {
           {session ? (
             <>
               <div className="flex items-center gap-2 text-gray-800">
-                <span>{session.user.name}</span>
+                {peutPublier ? (
+                  <Link
+                    href="/compte"
+                    aria-label={`Mon compte : ${session.user.name}`}
+                    className="underline-offset-2 hover:underline"
+                  >
+                    {session.user.name}
+                  </Link>
+                ) : (
+                  <span>{session.user.name}</span>
+                )}
                 <span className="rounded-full border border-teal-200 bg-primary-soft px-2 py-0.5 text-xs font-bold text-primary">
                   {session.user.role}
                 </span>

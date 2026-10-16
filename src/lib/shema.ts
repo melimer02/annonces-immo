@@ -158,3 +158,10 @@ export const PhotosInput = z.object({
     .max(MAX_PHOTOS, `${MAX_PHOTOS} photos maximum par envoi`),
 })
 
+
+// ── Espace de l'agent (/compte) ───────────────────────────────────
+// ?vue=brouillons&page=2 : une valeur invalide retombe sur la valeur par défaut, sans erreur
+export const CompteInput = z.object({
+  page: z.coerce.number().int().min(1).max(10000).catch(1),
+  vue: z.enum(["brouillons"]).optional().catch(undefined),
+})

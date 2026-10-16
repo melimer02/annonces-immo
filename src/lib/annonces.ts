@@ -23,15 +23,22 @@ export type FiltresAnnonces = {
   ville?: string
   prixMin?: number
   prixMax?: number
+  // Espace agent : uniquement les annonces de cet auteur.
+  // La valeur vient de la SESSION, jamais de l'URL.
+  auteurId?: string
+  // Uniquement les brouillons
+  brouillonsSeulement?: boolean
 }
 
 export async function listerAnnonces(
   user: Acteur | null,
-  { page, type, ville, prixMin, prixMax }: FiltresAnnonces
+  { page, type, ville, prixMin, prixMax, auteurId, brouillonsSeulement }: FiltresAnnonces
 ) {
   const where = {
     OR: filtreVisibilite(user),
     ...(type ? { typeBien: type } : {}),
+    ...(auteurId ? { auteurId } : {}),
+    ...(brouillonsSeulement ? { statutPublication: "BROUILLON" as const } : {}),
     ...(ville ? { ville: { contains: ville, mode: "insensitive" as const } } : {}),
     ...(prixMin !== undefined || prixMax !== undefined
       ? { prix: { gte: prixMin, lte: prixMax } }
