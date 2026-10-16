@@ -14,7 +14,7 @@ export async function connexionSociale(provider: unknown) {
     body: {
       provider: p.data,
       callbackURL: "/annonces",         // utilisateur déjà inscrit
-      newUserCallbackURL: "/bienvenue", // première connexion 
+   
     },
     headers: await headers(),
   })

@@ -6,10 +6,6 @@ import { Champ } from "@/components/champ"
 import type { EtatFormulaire } from "@/lib/form"
 
 
-const TYPES_COMPTE = [
-  { valeur: "USER", titre: "Particulier", desc: "Je cherche ou je publie une annonce" },
-  { valeur: "AGENT", titre: "Agent / Pro", desc: "Je représente une agence" },
-] as const
 
 
 export function FormRegister() {
