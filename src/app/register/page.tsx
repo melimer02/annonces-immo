@@ -2,7 +2,13 @@ import Link from "next/link"
 import { FormRegister } from "@/components/form-register"
 import { BoutonsSociaux } from "@/components/Boutton/boutons-sociaux"
 
-export default function RegisterPage() {
+export default async function RegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ suite?: string }>
+}) {
+  const { suite } = await searchParams
+
   return (
     <div className="mx-auto max-w-md px-4 py-12">
       <div className="carte p-8">
@@ -10,7 +16,7 @@ export default function RegisterPage() {
         <p className="mb-6 mt-1 text-sm text-gray-600">
           Posez vos questions aux agents en quelques secondes.
         </p>
-        <FormRegister />
+        <FormRegister  suite={suite} />
          <BoutonsSociaux />
       </div>
       <p className="mt-4 text-center text-sm text-gray-700">

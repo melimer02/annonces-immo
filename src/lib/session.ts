@@ -1,17 +1,15 @@
 import { headers } from "next/headers"
 import { redirect, notFound } from "next/navigation"
 import { auth } from "@/lib/auth"
-import { peutCreer, type StatutPro, type Acteur, type Role } from "@/lib/authz"
+import { peutCreer, type Acteur, type Role } from "@/lib/authz"
 
 export async function utilisateurCourant(): Promise<Acteur | null> {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session) return null
-   const u = session.user as { role?: Role; statutPro?: StatutPro }
 
   return {
     id: session.user.id,
-    role: u.role ?? "USER",
-    statutPro: u.statutPro ?? "AUCUN",
+    role: (session.user as { role?: Role }).role ?? "USER",
   }
 }
 
@@ -23,10 +21,8 @@ export async function exigerUtilisateur(): Promise<Acteur> {
 
 export async function exigerAgent(): Promise<Acteur> {
   const user = await exigerUtilisateur()
-    if (peutCreer(user)) return user
-  // Agent inscrit mais pas encore validé ou refusé
-  if (user.role === "AGENT") redirect("/annonces")
-  notFound() // simple 
+  if (!peutCreer(user)) notFound() // simple utilisateur : pas le droit de publier
+  return user
 }
 
 export async function exigerAdmin(): Promise<Acteur> {

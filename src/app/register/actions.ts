@@ -5,7 +5,9 @@ import { APIError } from "better-auth/api"
 import { auth } from "@/lib/auth"
 import { InscriptionInput } from "@/lib/shema"
 import { erreursDe, valeursDuFormulaire, type EtatFormulaire } from "@/lib/form"
-import { prisma } from "@/lib/prisma"
+import { suiteSure } from "@/lib/redirection"
+
+
 
 export async function inscrire(
   _etat: EtatFormulaire,
@@ -16,15 +18,9 @@ export async function inscrire(
   const parsed = InscriptionInput.safeParse(valeursDuFormulaire(formData))
   if (!parsed.success) return { erreurs: erreursDe(parsed.error), valeurs }
 
-  
-
   try {
-     await auth.api.signUpEmail({ body: parsed.data })
-  
-
- 
-   } catch (e) {
-     console.error("ERREUR INSCRIPTION :", e)
+    await auth.api.signUpEmail({ body: parsed.data })
+  } catch (e) {
     if (e instanceof APIError) {
       const code = String(e.body?.code ?? "")
       if (code.includes("USER_ALREADY_EXISTS")) {
@@ -37,7 +33,6 @@ export async function inscrire(
     }
     throw e
   }
-redirect("/annonces")
 
-
+  redirect(suiteSure(formData.get("suite")))
 }

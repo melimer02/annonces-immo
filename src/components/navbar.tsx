@@ -2,10 +2,9 @@ import Link from "next/link"
 import { headers } from "next/headers"
 import { auth } from "@/lib/auth"
 import { peutCreer, type Role } from "@/lib/authz"
-import { LIBELLE_ROLE } from "@/lib/affichage"
 import { deconnecter } from "@/app/logout/actions"
 import { utilisateurCourant } from "@/lib/session"
-
+import { devenirAgent } from "@/app/agent/action"
 export async function Navbar() {
   const session = await auth.api.getSession({ headers: await headers() })
   const role: Role = ((session?.user as { role?: Role } | undefined)?.role) ?? "USER"
@@ -13,12 +12,7 @@ export async function Navbar() {
   const peutPublier = !!user && peutCreer(user)
   const peutDevenirAgent = !user || user.role === "USER"
 
-  const libelle =
-  user?.role === "AGENT" && user.statutPro !== "VALIDE"
-    ? user.statutPro === "REFUSE"
-      ? "Agent refusé"
-      : "Agent en attente"
-    : LIBELLE_ROLE[role]
+
 
   return (
     <header className="border-b-4 border-primary bg-white shadow-sm">
@@ -45,11 +39,13 @@ export async function Navbar() {
           )}
 
         
-          {peutDevenirAgent && (
-          <Link href="/agent" className="text-sm font-medium underline hover:text-gray-600">
-          Devenir agent
-          </Link>
-          )}
+        {peutDevenirAgent && (
+        <form action={devenirAgent}>
+    <button type="submit" className="text-sm font-medium underline hover:text-gray-600">
+      Devenir agent
+    </button>
+  </form>
+        )}
         </div>
 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium">
@@ -58,7 +54,7 @@ export async function Navbar() {
               <div className="flex items-center gap-2 text-gray-800">
                 <span>{session.user.name}</span>
                 <span className="rounded-full border border-teal-200 bg-primary-soft px-2 py-0.5 text-xs font-bold text-primary">
-                  {libelle}
+                  {session.user.role}
                 </span>
               </div>
               <form action={deconnecter}>

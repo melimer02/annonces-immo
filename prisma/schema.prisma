@@ -23,7 +23,6 @@ model User {
   sessions      Session[]
   accounts      Account[]
   role          Role       @default(USER)
-  statutPro StatutPro @default(AUCUN)
   annonces      Annonce[]  // Les annonces créées par cet agent
   favoris       Favori[]   // Les annonces mises en favoris
   questions     Question[] // Les questions posées par cet utilisateur
