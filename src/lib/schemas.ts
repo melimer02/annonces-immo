@@ -13,10 +13,6 @@ export const IdInput = z
 
 
 
-
-
-
-
 const NombreOptionnel = z
   .string()
   .regex(/^\d+$/)
@@ -26,7 +22,7 @@ const NombreOptionnel = z
   .catch(undefined)
 
 
-// ?page=...&type=... : une valeur invalide retombe sur la valeur par défaut, sans erreur
+
 export const RechercheInput = z.object({
   page: z.coerce.number().int().min(1).max(10000).catch(1),
   type: z.enum(["VENTE", "LOCATION"]).optional().catch(undefined),
@@ -92,6 +88,10 @@ export type AnnonceInput = z.infer<typeof AnnonceInput>
 // Modification d'une annonce : même schéma, sauf pour la date déjà enregistrée
 export const annonceModificationInput = (dateActuelle: string) =>
   AnnonceInput.extend({ dateDisponibilite: dateDisponibilite(dateActuelle) })
+
+
+
+
 
 // ── Questions / réponses ──────────────────────────────────────────
 

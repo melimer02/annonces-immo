@@ -1,5 +1,5 @@
 // src/lib/prisma.ts
-// ⚠️ L'import vient du dossier généré, PAS de "@prisma/client".
+
 import { PrismaClient } from "@/generated/prisma/client"
 import { PrismaPg } from "@prisma/adapter-pg"
 import { appendFileSync } from "node:fs"

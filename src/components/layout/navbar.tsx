@@ -1,6 +1,5 @@
 import Link from "next/link"
-import { headers } from "next/headers"
-import { auth } from "@/lib/auth"
+
 import { peutCreer } from "@/lib/authz"
 import { LIBELLE_ROLE } from "@/lib/affichage"
 import { deconnecter } from "@/app/logout/actions"
@@ -8,7 +7,7 @@ import { utilisateurCourant } from "@/lib/session"
 import { devenirAgent } from "@/app/compte/actions"
 
 export async function Navbar() {
-  const session = await auth.api.getSession({ headers: await headers() })
+
   const user = await utilisateurCourant()
   const peutPublier = !!user && peutCreer(user)
 
@@ -54,19 +53,19 @@ export async function Navbar() {
         </div>
 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium">
-          {user && session ? (
+          {user ? (
             <>
               <div className="flex items-center gap-2 text-gray-800">
                 {peutPublier ? (
                   <Link
                     href="/compte"
-                    aria-label={`Mon compte : ${session.user.name}`}
+                    aria-label={`Mon compte : ${user.name}`}
                     className="underline-offset-2 hover:underline"
                   >
-                    {session.user.name}
+                    {user.name}
                   </Link>
                 ) : (
-                  <span>{session.user.name}</span>
+                  <span>{user.name}</span>
                 )}
                 <span className="rounded-full border border-teal-200 bg-primary-soft px-2 py-0.5 text-xs font-bold text-primary">
                   {LIBELLE_ROLE[user.role]}

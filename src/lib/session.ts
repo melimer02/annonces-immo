@@ -2,16 +2,19 @@ import { headers } from "next/headers"
 import { redirect, notFound } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { peutCreer, type Acteur, type Role } from "@/lib/authz"
+import { cache } from "react"
 
-export async function utilisateurCourant(): Promise<Acteur | null> {
+
+export const utilisateurCourant = cache(async (): Promise<Acteur | null> => {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session) return null
 
   return {
     id: session.user.id,
+    name: session.user.name, 
     role: (session.user as { role?: Role }).role ?? "USER",
   }
-}
+})
 
 export async function exigerUtilisateur(): Promise<Acteur> {
   const user = await utilisateurCourant()

@@ -1,4 +1,20 @@
+
+// teste les actions côté serveur  anti-idor
+
 import { describe, it, expect, vi, beforeEach, afterAll } from "vitest"
+
+import { auth } from "@/lib/auth"
+import { prisma } from "@/lib/prisma"
+import {
+  creerAnnonce,
+  modifierAnnonce,
+  changerPublication,
+  supprimerAnnonce,
+  poserQuestion,
+  repondreQuestion,
+} from "@/app/annonces/actions"
+
+
 
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }))
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }))
@@ -12,17 +28,6 @@ vi.mock("next/navigation", () => ({
 }))
 vi.mock("@/lib/auth", () => ({ auth: { api: { getSession: vi.fn() } } }))
 
-import { auth } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
-import {
-  creerAnnonce,
-  modifierAnnonce,
-  changerPublication,
-  supprimerAnnonce,
-  poserQuestion,
-  repondreQuestion,
-} from "@/app/annonces/actions"
-
 const UTILISATEURS = [
   { id: "agent-a", name: "Agent A", email: "a@test.fr", role: "AGENT" },
   { id: "agent-b", name: "Agent B", email: "b@test.fr", role: "AGENT" },
@@ -30,6 +35,8 @@ const UTILISATEURS = [
   { id: "user-1", name: "Usager", email: "user@test.fr", role: "USER" },
 ] as const
 const [agentA, agentB, admin, usager] = UTILISATEURS
+
+
 
 function connecterEn(u: { id: string; role: string } | null) {
   vi.mocked(auth.api.getSession).mockResolvedValue(

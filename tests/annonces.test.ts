@@ -1,3 +1,6 @@
+//teste la logique pure de visibilité des annonces, sans passer par l'API ni la base de données
+
+
 import { describe, it, expect, beforeEach, afterAll } from "vitest"
 import { prisma } from "@/lib/prisma"
 import { listerAnnonces } from "@/lib/annonces"

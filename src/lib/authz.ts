@@ -1,5 +1,5 @@
 export type Role = "USER" | "AGENT" | "ADMIN"
-export type Acteur = { id: string; role: Role }
+export type Acteur = { id: string; name?: string; role: Role }
 
 
 export const peutCreer = (a: Acteur) => a.role === "AGENT" || a.role === "ADMIN"

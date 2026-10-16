@@ -14,19 +14,19 @@ import { unlink } from "node:fs/promises"
 import path from "node:path"
 import { DOSSIER_UPLOADS } from "@/lib/photos"
 
-// Création d'une annonce (agent ou admin)
+// Création d'une annonce 
 export async function creerAnnonce(
   _etat: EtatFormulaire,
   formData: FormData
 ): Promise<EtatFormulaire> {
-  // Authentification puis autorisation par rôle
+
+  // Authentification 
   const user = await exigerAgent()
 
   // Validation
   const valeurs = valeursDuFormulaire(formData)
   const parsed = AnnonceInput.safeParse({ statutBien: "DISPONIBLE", ...valeurs })
-  // Photos facultatives à la création. On valide TOUT avant d'écrire quoi que ce soit :
-  // une photo invalide ne doit pas laisser une annonce créée à moitié.
+  // Photos facultatives à la création. 
   const photos = await preparerPhotos(fichiersDuFormulaire(formData), 0, true)
   if (!parsed.success || !photos.ok) {
     return {
@@ -46,7 +46,7 @@ export async function creerAnnonce(
   try {
     annonce = await prisma.annonce.create({
       data: {
-        ...parsed.data,
+        ...parsed.data, 
         auteurId: user.id,
         photos: { create: ecrits.map((nom) => ({ url: `/photos/${nom}` })) },
       },

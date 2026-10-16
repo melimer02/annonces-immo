@@ -1,3 +1,7 @@
+//teste la logique pure d'autorisation 
+
+
+
 import { describe, it, expect } from "vitest"
 import { peutCreer, peutModifier, peutVoir, filtreProprietaire } from "@/lib/authz"
 
