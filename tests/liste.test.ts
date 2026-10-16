@@ -6,6 +6,7 @@ const agentA = { id: "agent-a", role: "AGENT" as const }
 const agentB = { id: "agent-b", role: "AGENT" as const }
 const admin = { id: "admin-1", role: "ADMIN" as const }
 const usager = { id: "user-1", role: "USER" as const }
+import type { Acteur } from "@/lib/authz"
 
 const base = {
   description: "Description de test suffisamment longue",
@@ -13,7 +14,7 @@ const base = {
   dateDisponibilite: new Date("2026-12-01"),
 }
 
-async function titres(user: typeof agentA | null, opts: { page?: number; type?: "VENTE" | "LOCATION" } = {}) {
+async function titres(user: Acteur | null, opts: { page?: number; type?: "VENTE" | "LOCATION" } = {}) {
   const { annonces } = await listerAnnonces(user, { page: opts.page ?? 1, type: opts.type })
   return annonces.map((a) => a.titre).sort()
 }

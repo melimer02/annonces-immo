@@ -13,9 +13,7 @@ import {
   formatPrix,
 } from "@/lib/affichage"
 import { supprimerAnnonce, changerPublication, poserQuestion, repondreQuestion } from "../actions"
-import { ajouterPhotos } from "../photos-actions"
 import { FormTexte } from "@/components/form-texte"
-import { FormPhotos } from "@/components/form-photos"
 import { EtatVide } from "@/components/etat-vide"
 import { BoutonFavori } from "@/components/Boutton/bouton-favori"
 
@@ -207,7 +205,19 @@ export default async function AnnoncePage({ params }: { params: Promise<{ id: st
       <section aria-labelledby="titre-photos" className="mb-10">
         <h2 id="titre-photos" className="sr-only">Photos</h2>
         {!principale ? (
-          <EtatVide titre="Aucune photo pour cette annonce" />
+          <>
+            <EtatVide titre="Aucune photo pour cette annonce" />
+            {isOwner && (
+              <p className="mt-3 text-sm">
+                <Link
+                  href={`/annonces/${annonce.id}/edit`}
+                  className="font-medium text-primary underline"
+                >
+                  Ajouter des photos
+                </Link>
+              </p>
+            )}
+          </>
         ) : (
           <div className="space-y-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -222,11 +232,6 @@ export default async function AnnoncePage({ params }: { params: Promise<{ id: st
                 ))}
               </ul>
             )}
-          </div>
-        )}
-        {isOwner && (
-          <div className="carte mt-4 max-w-lg p-4">
-            <FormPhotos action={ajouterPhotos.bind(null, annonce.id)} />
           </div>
         )}
       </section>

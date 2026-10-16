@@ -11,7 +11,7 @@ export function GestionPhotos({ photos, titre }: Props) {
   }
 
   return (
-    <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+    <ul className="grid grid-cols-2 gap-3">
       {photos.map((p, i) => (
         <li key={p.id} className="overflow-hidden rounded-lg border bg-white">
           {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -7,14 +7,14 @@ export default async function NouvelleAnnoncePage() {
   await exigerAgent() // la page est protégée aussi (la vraie sécurité reste dans l'action)
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 py-8">
       <LienRetour href="/annonces">Retour aux annonces</LienRetour>
       <h1 className="text-3xl font-extrabold text-gray-900">Nouvelle annonce</h1>
       <p className="mb-6 mt-1 text-gray-600">
-        L&apos;annonce est créée en brouillon : vous pourrez ajouter des photos, puis la publier
-        depuis sa page.
+        L&apos;annonce est créée en brouillon. Les photos sont facultatives : vous pourrez en
+        ajouter ou en retirer plus tard, puis publier l&apos;annonce depuis sa page.
       </p>
-      <FormAnnonce action={creerAnnonce} bouton="Créer l'annonce" />
+      <FormAnnonce action={creerAnnonce} bouton="Créer l'annonce" avecPhotos />
     </div>
   )
 }

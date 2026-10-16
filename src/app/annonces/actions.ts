@@ -6,8 +6,9 @@ import { redirect, notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { exigerAgent, exigerUtilisateur } from "@/lib/session"
 import { filtreProprietaire, peutVoir } from "@/lib/authz"
-import { AnnonceInput, IdInput, QuestionInput, ReponseInput } from "@/lib/shema"
+import { AnnonceInput, annonceModificationInput, IdInput, QuestionInput, ReponseInput } from "@/lib/shema"
 import { erreursDe, valeursDuFormulaire, type EtatFormulaire } from "@/lib/form"
+import { ecrireSurDisque, fichiersDuFormulaire, preparerPhotos, supprimerFichiers } from "@/lib/photos-serveur"
 
 import { unlink } from "node:fs/promises"
 import path from "node:path"
@@ -24,12 +25,36 @@ export async function creerAnnonce(
   // Validation
   const valeurs = valeursDuFormulaire(formData)
   const parsed = AnnonceInput.safeParse({ statutBien: "DISPONIBLE", ...valeurs })
-  if (!parsed.success) return { erreurs: erreursDe(parsed.error), valeurs }
+  // Photos facultatives à la création. On valide TOUT avant d'écrire quoi que ce soit :
+  // une photo invalide ne doit pas laisser une annonce créée à moitié.
+  const photos = await preparerPhotos(fichiersDuFormulaire(formData), 0, true)
+  if (!parsed.success || !photos.ok) {
+    return {
+      erreurs: {
+        ...(parsed.success ? {} : erreursDe(parsed.error)),
+        ...(photos.ok ? {} : photos.erreurs),
+      },
+      valeurs,
+    }
+  }
 
   //  Écriture 
-  const annonce = await prisma.annonce.create({
-    data: { ...parsed.data, auteurId: user.id },
-  })
+  // Fichiers sur le disque, puis annonce + photos en UNE écriture en base (atomique).
+  // Si la base échoue, on supprime les fichiers déjà écrits.
+  const ecrits = await ecrireSurDisque(photos.photos)
+  let annonce
+  try {
+    annonce = await prisma.annonce.create({
+      data: {
+        ...parsed.data,
+        auteurId: user.id,
+        photos: { create: ecrits.map((nom) => ({ url: `/photos/${nom}` })) },
+      },
+    })
+  } catch (e) {
+    await supprimerFichiers(ecrits)
+    throw e
+  }
 
   revalidatePath("/annonces")
   redirect(`/annonces/${annonce.id}`)
@@ -47,7 +72,17 @@ export async function modifierAnnonce(
   if (!id.success) notFound()
 
   const valeurs = valeursDuFormulaire(formData)
-  const parsed = AnnonceInput.safeParse(valeurs)
+  // On lit la date enregistrée (en vérifiant les droits) : si elle n'est pas changée,
+  // on ne la revalide pas, pour qu'une ancienne annonce reste modifiable.
+  const existante = await prisma.annonce.findFirst({
+    where: { id: id.data, ...filtreProprietaire(user) },
+    select: { dateDisponibilite: true },
+  })
+  if (!existante) notFound() // inexistante OU pas à toi
+
+  const parsed = annonceModificationInput(
+    existante.dateDisponibilite.toISOString().slice(0, 10)
+  ).safeParse(valeurs)
   if (!parsed.success) return { erreurs: erreursDe(parsed.error), valeurs }
 
   const res = await prisma.annonce.updateMany({

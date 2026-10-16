@@ -1,5 +1,6 @@
 // src/lib/shema.ts 
 import { z } from "zod"
+import { afficherJour, jourDe, jourParis } from "@/lib/dates"
 
 // ── Paramètres d'URL ──────────────────────────────────────────────
 
@@ -16,6 +17,19 @@ export const RechercheInput = z.object({
 })
 
 // ── Annonces ──────────────────────────────────────────────────────
+
+// Date de disponibilité : jamais dans le passé (aujourd'hui accepté).
+// dateConservee : en modification, la date déjà enregistrée reste acceptée telle quelle,
+// pour qu'une ancienne annonce puisse être corrigée sans toucher à sa date.
+const dateDisponibilite = (dateConservee?: string) =>
+  z.coerce
+    .date({ error: "Date de disponibilité invalide" })
+    .refine((d) => jourDe(d) === dateConservee || jourDe(d) >= jourParis(), {
+      // fonction : le message est calculé à la validation, avec la date du jour
+      error: () =>
+        `La date de disponibilité ne peut pas être dans le passé : ` +
+        `choisissez le ${afficherJour(jourParis())} (aujourd'hui) ou une date ultérieure.`,
+    })
 
 export const AnnonceInput = z.object({
   titre: z
@@ -34,7 +48,7 @@ export const AnnonceInput = z.object({
     .number({ error: "Le prix doit être un nombre" })
     .positive("Le prix doit être supérieur à 0")
     .max(1_000_000_000, "Prix trop élevé"),
-  dateDisponibilite: z.coerce.date({ error: "Date de disponibilité invalide" }),
+  dateDisponibilite: dateDisponibilite(),
   // ── Validation de la localisation ──
 
   // ── Localisation ──
@@ -48,6 +62,10 @@ export const AnnonceInput = z.object({
    
 })
 export type AnnonceInput = z.infer<typeof AnnonceInput>
+
+// Modification d'une annonce : même schéma, sauf pour la date déjà enregistrée
+export const annonceModificationInput = (dateActuelle: string) =>
+  AnnonceInput.extend({ dateDisponibilite: dateDisponibilite(dateActuelle) })
 
 // ── Questions / réponses ──────────────────────────────────────────
 
