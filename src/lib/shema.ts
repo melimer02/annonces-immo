@@ -10,10 +10,36 @@ export const IdInput = z
   .transform(Number)
   .pipe(z.number().int().positive().max(2_147_483_647))
 
+
+
+
+
+
+
+
+const NombreOptionnel = z
+  .string()
+  .regex(/^\d+$/)
+  .transform(Number)
+  .pipe(z.number().max(1_000_000_000))
+  .optional()
+  .catch(undefined)
+
+
 // ?page=...&type=... : une valeur invalide retombe sur la valeur par défaut, sans erreur
 export const RechercheInput = z.object({
   page: z.coerce.number().int().min(1).max(10000).catch(1),
   type: z.enum(["VENTE", "LOCATION"]).optional().catch(undefined),
+  ville: z
+    .string()
+    .trim()
+    .max(80)
+    .transform((v) => v || undefined)
+    .optional()
+    .catch(undefined),
+  prixMin: NombreOptionnel,
+  prixMax: NombreOptionnel,
+
 })
 
 // ── Annonces ──────────────────────────────────────────────────────
@@ -131,3 +157,4 @@ export const PhotosInput = z.object({
     .min(1, "Choisissez au moins une photo")
     .max(MAX_PHOTOS, `${MAX_PHOTOS} photos maximum par envoi`),
 })
+

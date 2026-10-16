@@ -19,16 +19,31 @@ export default async function AnnoncesPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
   const sp = await searchParams
-  const { page, type } = RechercheInput.parse(sp)
+  const { page, type,ville, prixMin, prixMax } = RechercheInput.parse(sp)
   const user = await utilisateurCourant()
 
-  const { annonces, total } = await listerAnnonces(user, { page, type })
+  const { annonces, total } = await listerAnnonces(user, { page, type,ville, prixMin, prixMax })
 
   const totalPages = Math.max(1, Math.ceil(total / PAR_PAGE))
-  const suffixeType = type ? `&type=${type}` : ""
+  const filtresActifs = !!ville || prixMin !== undefined || prixMax !== undefined
+
   
   // Utilitaire pour la pagination (
-  const lien = (n: number) => `/annonces?page=${n}${suffixeType}`
+  const lien = (changements: Record<string, string | number | undefined> = {}) => {
+    const params = new URLSearchParams()
+    const valeurs: Record<string, string | number | undefined> = {
+      type,
+      ville,
+      prixMin,
+      prixMax,
+      ...changements,
+    }
+    for (const [cle, v] of Object.entries(valeurs)) {
+      if (v !== undefined && v !== "") params.set(cle, String(v))
+    }
+    const qs = params.toString()
+    return qs ? `/annonces?${qs}` : "/annonces"
+  }
 
   // Récupération des IDs favoris de l'utilisateur 
   const idsFavoris = user && user.role === "USER"
@@ -71,18 +86,52 @@ export default async function AnnoncesPage({
           {total === 0 ? "Aucun résultat" : `${total} annonce${total > 1 ? "s" : ""}`}
         </p>
       </div>
+      {/* Formulaire GET */}
+      <form
+        method="get"
+        action="/annonces"
+        className="mb-6 grid gap-3 rounded-xl border border-gray-200 bg-white p-4 sm:grid-cols-4"
+      >
+        {type && <input type="hidden" name="type" value={type} />}
 
+        <label className="text-sm font-medium text-gray-700">
+          Ville
+          <input name="ville" defaultValue={ville} placeholder="Rouen" className="champ mt-1" />
+        </label>
+        <label className="text-sm font-medium text-gray-700">
+          Prix min (€)
+          <input name="prixMin" type="number" min={0} defaultValue={prixMin} className="champ mt-1" />
+        </label>
+        <label className="text-sm font-medium text-gray-700">
+          Prix max (€)
+          <input name="prixMax" type="number" min={0} defaultValue={prixMax} className="champ mt-1" />
+        </label>
+
+        <div className="flex items-end gap-2">
+          <button type="submit" className="btn btn-primary">
+            Filtrer
+          </button>
+          {filtresActifs && (
+            <Link
+              href={lien({ ville: undefined, prixMin: undefined, prixMax: undefined })}
+              className="btn btn-secondary"
+            >
+              Réinitialiser
+            </Link>
+          )}
+        </div>
+      </form>
       {annonces.length === 0 ? (
         <EtatVide
           titre={
             page > 1
               ? "Cette page de résultats n'existe pas"
-              : type
-                ? "Aucune annonce de ce type"
+              : type || filtresActifs
+                ? "Aucune annonce ne correspond à votre recherche"
                 : "Aucune annonce pour le moment"
           }
           action={
-            page > 1 || type
+            page > 1 || type || filtresActifs
               ? { href: "/annonces", libelle: "Voir toutes les annonces" }
               : user && peutCreer(user)
                 ? { href: "/annonces/new", libelle: "Créer la première annonce" }
@@ -110,14 +159,14 @@ export default async function AnnoncesPage({
           className="mt-10 flex flex-wrap items-center justify-center gap-2"
         >
           {page > 1 && (
-            <Link href={lien(page - 1)} rel="prev" className="btn btn-secondary">
+            <Link href={lien({ page: page - 1 })} rel="prev" className="btn btn-secondary">
               ← Précédent
             </Link>
           )}
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
             <Link
               key={n}
-              href={lien(n)}
+              href={lien({ page: n })}
               aria-current={n === page ? "page" : undefined}
               className={`inline-flex h-9 min-w-9 items-center justify-center rounded-lg border px-3 text-sm font-semibold ${
                 n === page
@@ -128,8 +177,10 @@ export default async function AnnoncesPage({
               {n}
             </Link>
           ))}
+
           {page < totalPages && (
-            <Link href={lien(page + 1)} rel="next" className="btn btn-secondary">
+             <Link href={lien({ page: page + 1 })} rel="next" className="btn btn-secondary">
+           
               Suivant →
             </Link>
           )}

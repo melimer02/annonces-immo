@@ -17,13 +17,26 @@ export function filtreVisibilite(user: Acteur | null) {
   return [{ statutPublication: "PUBLIEE" as const }]
 }
 
+export type FiltresAnnonces = {
+  page: number
+  type?: "VENTE" | "LOCATION"
+  ville?: string
+  prixMin?: number
+  prixMax?: number
+}
+
 export async function listerAnnonces(
   user: Acteur | null,
-  { page, type }: { page: number; type?: "VENTE" | "LOCATION" }
+  { page, type, ville, prixMin, prixMax }: FiltresAnnonces
 ) {
   const where = {
     OR: filtreVisibilite(user),
     ...(type ? { typeBien: type } : {}),
+    ...(ville ? { ville: { contains: ville, mode: "insensitive" as const } } : {}),
+    ...(prixMin !== undefined || prixMax !== undefined
+      ? { prix: { gte: prixMin, lte: prixMax } }
+      : {}),
+  
   }
 
   const [annonces, total] = await Promise.all([
