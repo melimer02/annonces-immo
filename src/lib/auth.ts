@@ -3,6 +3,18 @@ import { prismaAdapter } from "better-auth/adapters/prisma"
 import { nextCookies } from "better-auth/next-js"
 import { prisma } from "./prisma"
 
+// Google n'est activé que si les deux variables sont définies :
+// l'application démarre sans clés, au lieu de s'appuyer sur un "!".
+const google =
+  process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+    ? {
+        google: {
+          clientId: process.env.GOOGLE_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        },
+      }
+    : {}
+
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
 
@@ -18,21 +30,10 @@ export const auth = betterAuth({
         defaultValue: "USER",
         input: false,
       },
-      statutPro: {
-      type: ["AUCUN", "EN_ATTENTE", "VALIDE", "REFUSE"],
-      defaultValue: "AUCUN",
-      input: false,
-  },
     },
   },
 
-socialProviders: {
-
-    google: {
-    clientId: process.env.GOOGLE_CLIENT_ID!,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-  },
-  },
+  socialProviders: google,
 
   plugins: [nextCookies()],
 })
