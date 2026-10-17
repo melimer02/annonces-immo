@@ -7,8 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run --reporter=verbose",
-    "test:coverage": "vitest run --coverage",
+    "test:db": "cross-env DATABASE_URL=postgresql://immo:immo@localhost:5432/immo_test npx prisma db push --accept-data-loss",
+    "test": "npm run test:db && vitest run --reporter verbose",
+    "postinstall": "prisma generate",
     "db:seed": "prisma db seed"
   },
   "dependencies": {
@@ -30,6 +31,8 @@
     "@types/react-dom": "^19",
     "@vitest/coverage-v8": "^5.0.5",
     "@vitest/ui": "^5.0.5",
+    "cross-env": "^10.1.0",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.3.5",
     "tailwindcss": "^4",

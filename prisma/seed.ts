@@ -10,7 +10,14 @@ async function creerUtilisateur(email: string, name: string, password: string) {
 
 async function main() {
   console.log("Réinitialisation des comptes...")
+
+  await prisma.user.deleteMany({
+  where: { email: { in: ["admin@immo.fr", "agent1@immo.fr", "agent2@immo.fr", "user1@immo.fr", "user2@immo.fr"] } },
+  })
   
+  //Admin
+  const admin = await creerUtilisateur("admin@immo.fr", "Admin", "motdepasse123")
+  await prisma.user.update({ where: { id: admin.id }, data: { role: "ADMIN" } })
   // 1. Création des agents
   const agent1 = await creerUtilisateur("agent1@immo.fr", "Agent Un", "motdepasse123")
   await prisma.user.update({ where: { id: agent1.id }, data: { role: "AGENT" } })

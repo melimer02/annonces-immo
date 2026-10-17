@@ -6,7 +6,9 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?manquant — copiez .env.example vers .env}
       POSTGRES_DB: ${POSTGRES_DB:?manquant — copiez .env.example vers .env}
     ports: ["${POSTGRES_PORT:-5432}:5432"]
-    volumes: ["pgdata:/var/lib/postgresql/data"]
+    volumes: 
+     - pgdata:/var/lib/postgresql/data
+     - ./docker/init-test-db.sh:/docker-entrypoint-initdb.d/init-test-db.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
