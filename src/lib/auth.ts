@@ -4,8 +4,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma"
 import { nextCookies } from "better-auth/next-js"
 import { prisma } from "./prisma"
 
-// Google n'est activé que si les deux variables sont définies :
-// l'application démarre sans clés, au lieu de s'appuyer sur un "!".
+
 const google =
   process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
     ? {

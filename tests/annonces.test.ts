@@ -72,3 +72,47 @@ describe("liste des annonces : visibilité des brouillons", () => {
     expect(await titres(admin, { page: 99 })).toEqual([])
   })
 })
+
+//-----------------test de performance : pas de N+1-----------------
+
+
+type ClientAvecRequetes = {
+  $on(event: "query", cb: (e: { query: string; duration: number }) => void): void
+}
+
+async function compterRequetes(fn: () => Promise<unknown>) {
+  let n = 0
+  ;(prisma as unknown as ClientAvecRequetes).$on("query", () => { n++ })
+  await fn()
+  return n
+}
+
+async function ajouterPubliees(nb: number) {
+  for (let i = 0; i < nb; i++) {
+    await prisma.annonce.create({
+      data: {
+        ...base,
+        titre: `Invariance-${i}-${Math.random()}`,
+        typeBien: "VENTE",
+        statutPublication: "PUBLIEE",
+        auteurId: agentA.id,
+        photos: { create: [{ url: "https://exemple.fr/a.jpg" }] },
+      },
+    })
+  }
+}
+
+describe("performance : pas de N+1", () => {
+  it("le nombre de requêtes ne dépend pas du nombre d'annonces affichées", async () => {
+    // beforeEach a déjà créé 1 publiée. On en ajoute 1 
+    await ajouterPubliees(1)
+    const avec2 = await compterRequetes(() => listerAnnonces(null, { page: 1 }))
+
+    // puis 28 de plus → page pleine (PAR_PAGE = 6 annonces affichées)
+    await ajouterPubliees(28)
+    const avec6 = await compterRequetes(() => listerAnnonces(null, { page: 1 }))
+
+    expect(avec2).toBeGreaterThan(0) 
+    expect(avec6).toBe(avec2)
+  })
+})

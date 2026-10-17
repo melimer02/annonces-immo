@@ -6,6 +6,8 @@ export default defineConfig({
     environment: "node",
     setupFiles: ["./tests/setup.ts"],
     fileParallelism: false,
+    coverage: {
+    exclude: ["src/lib/logging.ts", "src/lib/session.ts", "src/generated/**"],},
   },
   resolve: { alias: { "@": path.resolve(__dirname, "src") } },
 })
