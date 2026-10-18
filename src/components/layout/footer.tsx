@@ -13,7 +13,7 @@ export function Footer() {
           <div className="md:col-span-1">
             <Link href="/" className="flex items-center gap-2 text-xl font-extrabold text-primary">
               <Home className="h-6 w-6" />
-              AgenceWeb
+              M&I Immo
             </Link>
             <p className="mt-4 text-sm text-gray-600">
               Votre partenaire de confiance pour trouver le bien immobilier de vos rêves, simplement et rapidement.

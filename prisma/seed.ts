@@ -1,96 +1,133 @@
+import { readdirSync, readFileSync } from "node:fs"
+import { mkdir, writeFile } from "node:fs/promises"
+import { randomUUID } from "node:crypto"
+import path from "node:path"
 import { prisma } from "../src/lib/prisma"
 import { auth } from "../src/lib/auth"
+import { DOSSIER_UPLOADS, detecterType } from "../src/lib/photos"
 
-async function creerUtilisateur(email: string, name: string, password: string) {
-  const { user } = await auth.api.signUpEmail({
-    body: { email, name, password },
-  })
+type Role = "USER" | "AGENT" | "ADMIN"
+type Statut = "AUCUN" | "EN_ATTENTE" | "VALIDE"
+
+
+async function compte(email: string, name: string, role: Role = "USER", statutPro: Statut = "AUCUN") {
+  const existant = await prisma.user.findUnique({ where: { email } })
+  if (existant) return existant
+  const { user } = await auth.api.signUpEmail({ body: { email, name, password: "motdepasse123" } })
+  if (role !== "USER") await prisma.user.update({ where: { id: user.id }, data: { role, statutPro } })
   return user
 }
 
+// ── Photos : prisma/seed-photos/<categorie>-<n>.jpg ──
+const SOURCE = path.join(process.cwd(), "prisma", "photos-seed")
+const fichiers = readdirSync(SOURCE).filter((f) => /\.(jpe?g|png|webp)$/i.test(f))
+const photosDe = (cat: string) => fichiers.filter((f) => f.startsWith(`${cat}-`)).sort()
+
+// Copie une photo dans uploads/ sous un nom UUID, comme un vrai upload
+async function importerPhoto(fichier: string) {
+  const octets = new Uint8Array(readFileSync(path.join(SOURCE, fichier)))
+  const type = detecterType(octets) // on vérifie le vrai type, pas l'extension
+  if (!type) throw new Error(`Format d'image non reconnu : ${fichier}`)
+  const nom = `${randomUUID()}.${type.extension}`
+  await mkdir(DOSSIER_UPLOADS, { recursive: true })
+  await writeFile(path.join(DOSSIER_UPLOADS, nom), octets)
+  return { url: `/photos/${nom}` }
+}
+
+// ── Données ──
+const VILLES = [
+  { nom: "Paris", m2: 10500, quartiers: ["Montmartre", "Bastille", "Batignolles", "Vincennes"] },
+  { nom: "Bordeaux", m2: 4600, quartiers: ["Chartrons", "Saint-Pierre", "Caudéran"] },
+  { nom: "Aix-en-Provence", m2: 5200, quartiers: ["Mazarin", "Jas de Bouffan", "centre historique"] },
+  { nom: "Rouen", m2: 3100, quartiers: ["Saint-Marc", "Jouvenet", "rive gauche"] },
+  { nom: "Caen", m2: 2800, quartiers: ["Vaucelles", "Saint-Gilles", "Université"] },
+  { nom: "Le Havre", m2: 2400, quartiers: ["Perret", "Sainte-Adresse", "Saint-François"] },
+  { nom: "Saint-Étienne", m2: 1300, quartiers: ["Jacquard", "Bellevue", "Châteaucreux"] },
+  { nom: "L'Aigle", m2: 1500, quartiers: ["centre-ville", "gare", "route de Mortagne"] },
+]
+
+const BIENS = [
+  { nom: "Maison", pieces: [4, 5, 6], surfaces: [95, 120, 150], coef: 1,
+    photos: ["maison", "salon", "cuisine", "chambre", "salleDeBain"],
+    atouts: ["jardin clos de 400 m²", "garage double", "terrasse plein sud", "cheminée", "cave voûtée", "combles aménageables"] },
+  { nom: "Appartement", pieces: [2, 3, 4], surfaces: [45, 68, 85], coef: 1,
+    photos: ["immeuble", "salon", "cuisine", "chambre"],
+    atouts: ["balcon", "ascenseur", "parquet ancien", "double vitrage", "cave", "place de parking"] },
+  { nom: "Studio", pieces: [1], surfaces: [20, 25, 30], coef: 1.1,
+    photos: ["immeuble", "salon", "cuisine", "salleDeBain"],
+    atouts: ["entièrement rénové", "cuisine équipée", "proche transports", "interphone", "fibre optique", "charges réduites"] },
+  { nom: "Villa", pieces: [5, 6, 7], surfaces: [160, 200, 240], coef: 1.3,
+    photos: ["villa", "piscine", "salon", "cuisine", "chambre"],
+    atouts: ["piscine chauffée", "grand jardin arboré", "double garage", "vue dégagée", "pool house", "domotique"] },
+]
+
+const DPE = ["B", "C", "C", "D", "D", "E"]
+
 async function main() {
-  console.log("Réinitialisation des comptes...")
+  console.log("Comptes de démonstration...")
+  await compte("admin@immo.fr", "Admin", "ADMIN")
+  const agent1 = await compte("agent1@immo.fr", "Agent Un", "AGENT", "VALIDE")
+  const agent2 = await compte("agent2@immo.fr", "Agent Deux", "AGENT", "VALIDE")
+  await compte("agent3@immo.fr", "Agent Trois", "AGENT", "EN_ATTENTE")
+  await compte("user1@immo.fr", "Client Un")
+  await compte("user2@immo.fr", "Client Deux")
 
-  await prisma.user.deleteMany({
-  where: { email: { in: ["admin@immo.fr", "agent1@immo.fr", "agent2@immo.fr", "user1@immo.fr", "user2@immo.fr"] } },
-  })
-  
-  //Admin
-  const admin = await creerUtilisateur("admin@immo.fr", "Admin", "motdepasse123")
-  await prisma.user.update({ where: { id: admin.id }, data: { role: "ADMIN" } })
-  // 1. Création des agents
-  const agent1 = await creerUtilisateur("agent1@immo.fr", "Agent Un", "motdepasse123")
+  if ((await prisma.annonce.count()) > 0) {
+    console.log("Annonces déjà présentes : ignorées.")
+    return
+  }
 
-  const agent2 = await creerUtilisateur("agent2@immo.fr", "Agent Deux", "motdepasse123")
+  console.log("Création de 20 annonces (copie des photos dans uploads/)...")
+  for (let i = 0; i < 20; i++) {
+    const vente = i % 2 === 0
+    const ville = VILLES[i % VILLES.length]
+    const quartier = ville.quartiers[i % ville.quartiers.length]
+    const bien = BIENS[i % BIENS.length]
+    const pieces = bien.pieces[i % bien.pieces.length]
+    const surface = bien.surfaces[(i + 1) % bien.surfaces.length]
+    const atouts = [bien.atouts[i % 6], bien.atouts[(i + 2) % 6], bien.atouts[(i + 4) % 6]]
+    const dpe = DPE[i % DPE.length]
 
-  await prisma.user.update({ where: { id: agent1.id }, data: { role: "AGENT", statutPro: "VALIDE" } })
-  await prisma.user.update({ where: { id: agent2.id }, data: { role: "AGENT", statutPro: "VALIDE" } })
+    const prixVente = Math.round((surface * ville.m2 * bien.coef) / 1000) * 1000
+    const prix = vente ? prixVente : Math.round((prixVente * 0.0035) / 10) * 10
 
-  const agent3 = await creerUtilisateur("agent3@immo.fr", "Agent Trois", "motdepasse123")
-await prisma.user.update({ where: { id: agent3.id }, data: { role: "AGENT", statutPro: "EN_ATTENTE" } })
-  // 2. Création des utilisateurs simples
-  const user1 = await creerUtilisateur("user1@immo.fr", "Client Un", "motdepasse123")
-  const user2 = await creerUtilisateur("user2@immo.fr", "Client Deux", "motdepasse123")
+    const type = pieces > 1 ? `${pieces} pièces` : "T1"
+    const titre = ` ${bien.nom.toLowerCase()} ${type} de ${surface} m² – ${quartier}, ${ville.nom}`
+    const description = [
+      `${bien.nom}  de ${surface} m² (${type}) situé dans le quartier ${quartier}, à ${ville.nom}.`,
+      `Points forts : ${atouts.join(", ")}.`,
+      `Commerces, écoles et transports à proximité. Diagnostic énergétique : ${dpe}.`,
+      vente
+        ? "Visite sur rendez-vous, dossier complet disponible auprès de l'agence."
+        : "Loyer charges comprises. Dossier de location à constituer (pièce d'identité, justificatifs de revenus).",
+    ].join("\n")
 
-  const villes = ["Le Havre", "Rouen", "Paris", "Caen", "Bordeaux", "Saint-Étienne", "L'Aigle", "Aix-en-Provence"]
+    
+    const photos = []
+    for (const [k, cat] of bien.photos.entries()) {
+      const liste = photosDe(cat)
+      if (liste.length === 0) throw new Error(`Aucune photo "${cat}-*" dans prisma/seed-photos/`)
+      photos.push(await importerPhoto(liste[(i + k) % liste.length]))
+    }
 
-  // 10 images statiques et fiables (Picsum)
-  const poolImages = [
-    "https://picsum.photos/id/1040/800/500", // Maison / Château
-    "https://picsum.photos/id/1047/800/500", // Immeubles ville
-    "https://picsum.photos/id/1031/800/500", // Quartier urbain
-    "https://picsum.photos/id/122/800/500",  // Rue de nuit
-    "https://picsum.photos/id/164/800/500",  // Ville et canal
-    "https://picsum.photos/id/175/800/500",  // Intérieur antique
-    "https://picsum.photos/id/192/800/500",  // Façade immeuble
-    "https://picsum.photos/id/238/800/500",  // Vue métropole
-    "https://picsum.photos/id/256/800/500",  // Chalet montagne
-    "https://picsum.photos/id/274/800/500"   // Ville de nuit
-  ]
-
-  console.log("Génération de 50 annonces avec leurs photos...")
-
-  // 3. Boucle de création
-  for (let index = 0; index < 50; index++) {
-    const isVente = index % 2 === 0
-    const typeBien = isVente ? "VENTE" : "LOCATION"
-    const prix = isVente ? 150000 + (index * 5000) : 500 + (index * 20)
-    const auteurId = index % 2 === 0 ? agent1.id : agent2.id
-    const villeChoisie = villes[index % villes.length]
-
-    // Sélection de 2 images différentes dans le tableau de 10
-    const img1 = poolImages[index % poolImages.length]
-    const img2 = poolImages[(index + 1) % poolImages.length]
-
+    const publiee = i % 8 !== 0
     await prisma.annonce.create({
       data: {
-        titre: `Annonce n°${index + 1} - ${isVente ? "Maison" : "Appartement"} T${(index % 5) + 1}`,
-        description: `Superbe bien immobilier situé à ${villeChoisie}. C'est l'annonce numéro ${index + 1} générée pour tester la pagination et l'affichage des images.`,
-        typeBien: typeBien,
-        statutPublication: index % 5 === 0 ? "BROUILLON" : "PUBLIEE", 
-        statutBien: "DISPONIBLE",
-        prix: prix,
-        dateDisponibilite: new Date(),
-        auteurId: auteurId,
-        ville: villeChoisie,
-        photos: {
-          create: [
-            { url: img1 },
-            { url: img2 }
-          ]
-        }
+        titre, description,
+        typeBien: vente ? "VENTE" : "LOCATION",
+        statutPublication: publiee ? "PUBLIEE" : "BROUILLON",
+        statutBien: publiee && i % 11 === 0 ? (vente ? "VENDU" : "LOUE") : "DISPONIBLE",
+        prix,
+        dateDisponibilite: new Date(Date.now() + (i % 6) * 7 * 24 * 3600 * 1000),
+        ville: ville.nom,
+        auteurId: (i % 2 === 0 ? agent1 : agent2).id,
+        photos: { create: photos },
       },
     })
   }
-
-  console.log("Seed terminé avec succès : 50 annonces créées !")
+  console.log("Seed terminé : 6 comptes, 50 annonces (4 à 5 photos chacune).")
 }
 
 main()
-  .catch((e) => {
-    console.error(e)
-    process.exit(1)
-  })
-  .finally(async () => {
-    await prisma.$disconnect()
-  })
+  .catch((e) => { console.error(e); process.exit(1) })
+  .finally(() => prisma.$disconnect())

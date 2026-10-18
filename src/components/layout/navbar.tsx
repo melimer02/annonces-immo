@@ -25,7 +25,7 @@ export async function Navbar() {
         
         {/* GAUCHE : Logo */}
         <Link href="/annonces" className="text-2xl font-extrabold tracking-tight text-primary hover:opacity-90">
-          AgenceWeb
+          M&I Immo
         </Link>
 
         {/* DROITE : Actions & Espace Utilisateur */}

@@ -112,7 +112,7 @@ curl -s localhost:3000/annonces | grep -c "maison"
 ## Limites
 
 
-- Les photos du seed sont des liens externes , pas des fichiers uploadés.
+- **Envoi d'emails :** L'application ne contient pas de serveur SMTP configuré. Les emails (pour réinitialiser un mot de passe par exemple) ne partent pas réellement.
 - La connexion Google ne s'active que si les clés sont dans `.env`.
 
 ## Usage de l'IA

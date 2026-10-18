@@ -279,11 +279,7 @@ export default async function AnnoncePage({ params }: { params: Promise<{ id: st
               </div>
             </dl>
 
-            {!isOwner && (
-              <a href="#questions" className="btn btn-primary mt-6 w-full py-3 text-base text-center block">
-                Poser une question à l&apos;agent
-              </a>
-            )}
+            
           </div>
         </aside>
 

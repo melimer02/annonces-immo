@@ -27,7 +27,6 @@ export async function GET(
   // 3. Même règle de visibilité que la page de détail
   const user = await utilisateurCourant()
   if (!peutVoir(user, photo.annonce)) return introuvable()
-
   // 4. Lecture du fichier
   let contenu: Buffer
   try {
