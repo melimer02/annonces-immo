@@ -25,7 +25,7 @@ export async function inscrire(
     if (veutEtreAgent) {
       await prisma.user.update({
         where: { id: user.id },
-        data: { role: "AGENT" },
+        data: { role: "AGENT", statutPro: "EN_ATTENTE" },
       })
     }
   } catch (e) {
@@ -42,5 +42,5 @@ export async function inscrire(
     throw e
   }
 
-  redirect(veutEtreAgent ? "/compte" : "/annonces")
+  redirect(veutEtreAgent ? "/compte/agent" : "/annonces")
 }

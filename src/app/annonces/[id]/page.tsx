@@ -116,7 +116,7 @@ export default async function AnnoncePage({ params }: { params: Promise<{ id: st
     : false
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
+    <div className="mx-auto max-w-7xl px-4 py-8">
       <Link
         href="/annonces"
         className="mb-6 inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary-hover hover:underline"
@@ -201,6 +201,7 @@ export default async function AnnoncePage({ params }: { params: Promise<{ id: st
       </header>
 
       {/* PHOTOS */}
+       {/* PHOTOS */}
       <section aria-labelledby="titre-photos" className="mb-10">
         <h2 id="titre-photos" className="sr-only">Photos</h2>
         {!principale ? (
@@ -218,15 +219,27 @@ export default async function AnnoncePage({ params }: { params: Promise<{ id: st
             )}
           </>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
+            {/* 1. Image principale */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={principale.url} alt={`${annonce.titre} : photo 1 sur ${total}`} className="aspect-[16/9] w-full rounded-2xl object-cover" />
+            <img 
+              src={principale.url} 
+              alt={`${annonce.titre} : photo 1 sur ${total}`} 
+              className="h-[350px] w-full rounded-2xl object-cover md:h-[500px]" 
+            />
+            
+            {/* 2. Grille de miniatures  */}
             {autres.length > 0 && (
-              <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
                 {autres.map((p, i) => (
                   <li key={p.id}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={p.url} alt={`${annonce.titre} : photo ${i + 2} sur ${total}`} loading="lazy" className="aspect-video w-full rounded-xl object-cover" />
+                    <img 
+                      src={p.url} 
+                      alt={`${annonce.titre} : photo ${i + 2} sur ${total}`} 
+                      loading="lazy" 
+                      className="h-24 w-full rounded-xl object-cover sm:h-32" 
+                    />
                   </li>
                 ))}
               </ul>

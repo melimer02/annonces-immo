@@ -54,7 +54,7 @@ export default async function AnnoncesPage({
     : []
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
+    <div className="mx-auto max-w-7xl px-4 py-8">
       <header className="mb-8 rounded-2xl bg-primary-soft px-6 py-8">
         <h1 className="text-3xl font-extrabold text-gray-900">Trouvez votre prochain bien</h1>
         <p className="mt-2 max-w-2xl text-gray-700">

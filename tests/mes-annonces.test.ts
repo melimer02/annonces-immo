@@ -3,9 +3,9 @@ import { prisma } from "@/lib/prisma"
 import { listerAnnonces, type FiltresAnnonces } from "@/lib/annonces"
 import type { Acteur } from "@/lib/authz"
 
-const agentA: Acteur = { id: "agent-a", role: "AGENT" }
-const agentB: Acteur = { id: "agent-b", role: "AGENT" }
-const admin: Acteur = { id: "admin-1", role: "ADMIN" }
+const agentA: Acteur = { id: "agent-a", role: "AGENT", statutPro: "VALIDE" }
+const agentB: Acteur = { id: "agent-b", role: "AGENT", statutPro: "VALIDE" }
+const admin: Acteur  = { id: "admin-1", role: "ADMIN", statutPro: "AUCUN" }
 
 const base = {
   description: "Description de test suffisamment longue",

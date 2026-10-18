@@ -1,18 +1,20 @@
 import { headers } from "next/headers"
 import { redirect, notFound } from "next/navigation"
 import { auth } from "@/lib/auth"
-import { peutCreer, type Acteur, type Role } from "@/lib/authz"
+import { peutCreer, StatutPro, type Acteur, type Role } from "@/lib/authz"
 import { cache } from "react"
 
 
 export const utilisateurCourant = cache(async (): Promise<Acteur | null> => {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session) return null
+   const u = session.user as { role?: Role; statutPro?: StatutPro }
 
   return {
     id: session.user.id,
     name: session.user.name, 
-    role: (session.user as { role?: Role }).role ?? "USER",
+    role: u.role ?? "USER",
+    statutPro: u.statutPro ?? "AUCUN",
   }
 })
 

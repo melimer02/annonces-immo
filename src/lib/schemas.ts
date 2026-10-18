@@ -159,9 +159,24 @@ export const PhotosInput = z.object({
 })
 
 
-// ── Espace de l'agent (/compte) ───────────────────────────────────
+// ── Espace de l'agent () ───────────────────────────────────
 // ?vue=brouillons&page=2 : une valeur invalide retombe sur la valeur par défaut, sans erreur
 export const CompteInput = z.object({
   page: z.coerce.number().int().min(1).max(10000).catch(1),
   vue: z.enum(["brouillons"]).optional().catch(undefined),
+})
+
+
+
+//--------------Administration-----------------
+
+export const AdminRechercheInput = z.object({
+  page: z.coerce.number().int().min(1).max(10000).catch(1),
+  vue: z.enum(["attente", "agents", "particuliers", "tous"]).catch("attente"),
+  q: z.string().trim().max(80).transform((v) => v || undefined).optional().catch(undefined),
+})
+
+export const ActionAdminInput = z.object({
+  userId: z.string().min(1).max(64),
+  action: z.enum(["VALIDER", "REFUSER", "REPASSER_PARTICULIER", "DECONNECTER"]),
 })

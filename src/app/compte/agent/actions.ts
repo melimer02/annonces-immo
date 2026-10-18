@@ -13,7 +13,8 @@ export async function devenirAgent() {
   if (user.role === "USER") {
     await prisma.user.updateMany({
       where: { id: user.id, role: "USER" },
-      data: { role: "AGENT" },
+      data: { role: "AGENT", statutPro: "EN_ATTENTE" },
+
     })
   }
 

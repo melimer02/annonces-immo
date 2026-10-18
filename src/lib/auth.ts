@@ -30,9 +30,14 @@ export const auth = betterAuth({
         defaultValue: "USER",
         input: false,
       },
-    },
+  
+     statutPro: {
+       type: ["AUCUN", "EN_ATTENTE", "VALIDE", "REFUSE"],
+       defaultValue: "AUCUN",
+       input: false,  
+   },
   },
-
+  },
   socialProviders: google,
 
   plugins: [nextCookies()],

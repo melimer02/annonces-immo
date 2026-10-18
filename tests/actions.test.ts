@@ -12,9 +12,10 @@ import {
   supprimerAnnonce,
   poserQuestion,
   repondreQuestion,
+
 } from "@/app/annonces/actions"
-
-
+import { basculerFavori } from "@/app/favoris/actions"
+import { changerUtilisateur } from "@/app/compte/admin/actions"
 
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }))
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }))
@@ -29,18 +30,18 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/lib/auth", () => ({ auth: { api: { getSession: vi.fn() } } }))
 
 const UTILISATEURS = [
-  { id: "agent-a", name: "Agent A", email: "a@test.fr", role: "AGENT" },
-  { id: "agent-b", name: "Agent B", email: "b@test.fr", role: "AGENT" },
-  { id: "admin-1", name: "Admin", email: "admin@test.fr", role: "ADMIN" },
-  { id: "user-1", name: "Usager", email: "user@test.fr", role: "USER" },
+  { id: "agent-a", name: "Agent A", email: "a@test.fr", role: "AGENT" , statutPro: "VALIDE" as const},
+  { id: "agent-b", name: "Agent B", email: "b@test.fr", role: "AGENT", statutPro: "VALIDE" as const },
+  { id: "admin-1", name: "Admin", email: "admin@test.fr", role: "ADMIN" , statutPro: "AUCUN" as const },
+  { id: "user-1", name: "Usager", email: "user@test.fr", role: "USER" , statutPro: "AUCUN" as const },
 ] as const
 const [agentA, agentB, admin, usager] = UTILISATEURS
 
 
 
-function connecterEn(u: { id: string; role: string } | null) {
+function connecterEn(u: { id: string; role: string; statutPro?: string } | null) {
   vi.mocked(auth.api.getSession).mockResolvedValue(
-    (u ? { user: { id: u.id, role: u.role } } : null) as never
+    (u ? { user: { id: u.id, role: u.role, statutPro: u.statutPro } } : null) as never
   )
 }
 
@@ -272,5 +273,51 @@ describe("questions / réponses", () => {
     expect((await prisma.question.findUniqueOrThrow({ where: { id: q.id } })).reponse).toBe(
       "Oui, un peu."
     )
+  })
+})
+describe("gestion des favoris", () => {
+  it("un USER peut ajouter et retirer une annonce de ses favoris", async () => {
+    const a = await prisma.annonce.create({ data: donnees(agentA.id, { statutPublication: "PUBLIEE" }) })
+    connecterEn(usager)
+    
+    // Ajout
+    await basculerFavori(a.id)
+    let fav = await prisma.favori.count({ where: { userId: usager.id, annonceId: a.id } })
+    expect(fav).toBe(1)
+
+    // Retrait
+    await basculerFavori(a.id)
+    fav = await prisma.favori.count({ where: { userId: usager.id, annonceId: a.id } })
+    expect(fav).toBe(0)
+  })
+
+  it("un anonyme est renvoyé vers la page de login", async () => {
+    const a = await prisma.annonce.create({ data: donnees(agentA.id) })
+    connecterEn(null)
+    await expect(basculerFavori(a.id)).rejects.toThrow("REDIRECT:/login")
+  })
+})
+
+describe("actions administrateur (changerUtilisateur)", () => {
+  it("un ADMIN peut valider un agent en attente", async () => {
+    const cible = await prisma.user.create({
+      data: { id: "agt1",name: "Nouveau", email: "attente@test.fr", role: "AGENT", statutPro: "EN_ATTENTE" }
+    })
+    connecterEn(admin) 
+    await expect(changerUtilisateur(cible.id, "VALIDER"))
+    
+    const apres = await prisma.user.findUniqueOrThrow({ where: { id: cible.id } })
+    expect(apres.statutPro).toBe("VALIDE")
+  })
+
+  it("un AGENT ou USER ne peut pas utiliser cette action", async () => {
+    connecterEn(agentA)
+    await expect(changerUtilisateur(agentB.id, "VALIDER")).rejects.toThrow("NOT_FOUND")
+  })
+
+  it("un ADMIN ne peut pas se déconnecter ou se modifier lui-même", async () => {
+    connecterEn(admin)
+
+    await expect(changerUtilisateur(admin.id, "DECONNECTER")).rejects.toThrow("NOT_FOUND")
   })
 })

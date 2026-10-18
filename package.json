@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:db": "cross-env DATABASE_URL=postgresql://immo:immo@localhost:5432/immo_test npx prisma db push --accept-data-loss",
+    "test:db": "cross-env DATABASE_URL=postgresql://immo:immo@localhost:5433/immo_test npx prisma db push --accept-data-loss",
     "test": "npm run test:db && vitest run --reporter verbose",
     "postinstall": "prisma generate",
     "db:seed": "prisma db seed"

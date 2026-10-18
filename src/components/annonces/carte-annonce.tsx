@@ -30,10 +30,7 @@ export function CarteAnnonce({ annonce, estFavori = false, userRole, peutEditer 
   return (
     <article className="carte relative flex h-full flex-col overflow-hidden transition hover:border-primary hover:shadow-md has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary">
       
-      {/* 
-        Le lien principal enveloppe presque tout pour que la carte soit cliquable. 
-        On utilise z-0 pour laisser les éléments superposés (badges, favoris) passer par-dessus.
-      */}
+      
       <Link href={`/annonces/${annonce.id}`} className="group flex flex-1 flex-col outline-none z-0">
         <div className="relative overflow-hidden bg-gray-100">
           {photo ? (

@@ -5,10 +5,10 @@ import { describe, it, expect, beforeEach, afterAll } from "vitest"
 import { prisma } from "@/lib/prisma"
 import { listerAnnonces } from "@/lib/annonces"
 
-const agentA = { id: "agent-a", role: "AGENT" as const }
-const agentB = { id: "agent-b", role: "AGENT" as const }
-const admin = { id: "admin-1", role: "ADMIN" as const }
-const usager = { id: "user-1", role: "USER" as const }
+const agentA: Acteur = { id: "agent-a", role: "AGENT", statutPro: "VALIDE" }
+const agentB: Acteur = { id: "agent-b", role: "AGENT", statutPro: "VALIDE" }
+const admin: Acteur  = { id: "admin-1", role: "ADMIN", statutPro: "AUCUN" }
+const usager: Acteur = { id: "user-1",  role: "USER",  statutPro: "AUCUN" }
 import type { Acteur } from "@/lib/authz"
 
 const base = {

@@ -23,7 +23,7 @@ export default async function RegisterPage({
         </p>
         <FormRegister agent={agent} />
 
-        {!agent && <BoutonsSociaux />}
+      
       </div>
       <p className="mt-4 text-center text-sm text-gray-700">
         Déjà un compte ?{" "}
