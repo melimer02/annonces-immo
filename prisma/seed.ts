@@ -20,11 +20,14 @@ async function main() {
   await prisma.user.update({ where: { id: admin.id }, data: { role: "ADMIN" } })
   // 1. Création des agents
   const agent1 = await creerUtilisateur("agent1@immo.fr", "Agent Un", "motdepasse123")
-  await prisma.user.update({ where: { id: agent1.id }, data: { role: "AGENT" } })
 
   const agent2 = await creerUtilisateur("agent2@immo.fr", "Agent Deux", "motdepasse123")
-  await prisma.user.update({ where: { id: agent2.id }, data: { role: "AGENT" } })
 
+  await prisma.user.update({ where: { id: agent1.id }, data: { role: "AGENT", statutPro: "VALIDE" } })
+  await prisma.user.update({ where: { id: agent2.id }, data: { role: "AGENT", statutPro: "VALIDE" } })
+
+  const agent3 = await creerUtilisateur("agent3@immo.fr", "Agent Trois", "motdepasse123")
+await prisma.user.update({ where: { id: agent3.id }, data: { role: "AGENT", statutPro: "EN_ATTENTE" } })
   // 2. Création des utilisateurs simples
   const user1 = await creerUtilisateur("user1@immo.fr", "Client Un", "motdepasse123")
   const user2 = await creerUtilisateur("user2@immo.fr", "Client Deux", "motdepasse123")
