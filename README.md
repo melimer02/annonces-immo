@@ -4,20 +4,20 @@ Ce projet est une application Web full-stack . Il s'agit d'une plateforme de ges
 
 ## 🛠 Stack Technique
 
-Ce projet respecte les contraintes techniques imposées par le cahier des charges[cite: 4] :
-* **Framework :** Next.js 16+ (App Router)[cite: 4]
-* **Langage :** TypeScript (avec `strict: true`)[cite: 4]
+Ce projet respecte les contraintes techniques imposées par le cahier des charges:
+* **Framework :** Next.js 16+ (App Router)
+* **Langage :** TypeScript (avec `strict: true`)
 * **Base de données :** PostgreSQL (hébergé via Docker)[cite: 4]
 * **ORM :** Prisma 7.x[cite: 4]
-* **Authentification :** Better Auth[cite: 4]
-* **Validation :** Zod (pour la validation au runtime de toute entrée)[cite: 4]
-* **Tests :** Vitest (sur une base de test séparée)[cite: 4]
+* **Authentification :** Better Auth
+* **Validation :** Zod (pour la validation au runtime de toute entrée)
+* **Tests :** Vitest (sur une base de test séparée)
 
 ---
 
 ## 🚀 Démarrage en partant de zéro
 
-Voici les étapes pour lancer le projet sur une machine vierge[cite: 8, 10].
+Voici les étapes pour lancer le projet sur une machine vierge
 
 ### 1. Prérequis
 * Node.js (version 20 minimum)
